@@ -1,0 +1,110 @@
+{
+  "name": "newproxy",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "main": "dist/lib/new-proxy.js",
+  "module": "dist/lib/new-proxy.js",
+  "typings": "dist/types/new-proxy.d.ts",
+  "files": [
+    "dist"
+  ],
+  "author": "sannysoft <sannysoft@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "scripts": {
+    "lint": "eslint --cache --ext .js,.jsx,.ts,.tsx ./src",
+    "prebuild": "rimraf dist",
+    "build": "tsc --module commonjs",
+    "test": "jest --coverage",
+    "test:watch": "jest --coverage --watch",
+    "test:prod": "npm run lint && npm run test -- --no-cache",
+    "precommit": "lint-staged"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "{src,test}/**/*.ts": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "jest": {
+    "transform": {
+      ".(ts|tsx)": "ts-jest"
+    },
+    "testEnvironment": "node",
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/test/"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 90,
+        "functions": 95,
+        "lines": 95,
+        "statements": 95
+      }
+    },
+    "collectCoverageFrom": [
+      "src/*.{js,ts}"
+    ]
+  },
+  "devDependencies": {
+    "@types/jest": "^23.3.2",
+    "@types/mkdirp": "^1.0.0",
+    "@types/node": "^10.17.24",
+    "@types/node-forge": "^0.9.3",
+    "@typescript-eslint/eslint-plugin": "^1.6.0",
+    "@typescript-eslint/parser": "^2.34.0",
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-typescript": "^1.1.0",
+    "eslint-config-prettier": "^4.1.0",
+    "eslint-plugin-eslint-comments": "^3.1.1",
+    "eslint-plugin-import": "^2.16.0",
+    "eslint-plugin-jest": "^22.4.1",
+    "eslint-plugin-jsx-a11y": "^6.2.0",
+    "eslint-plugin-promise": "^4.1.1",
+    "eslint-plugin-react": "^7.12.4",
+    "eslint-plugin-unicorn": "^8.0.1",
+    "husky": "^1.0.1",
+    "import-sort-parser-babylon": "^6.0.0",
+    "import-sort-parser-typescript": "^6.0.0",
+    "import-sort-style-module": "^6.0.0",
+    "jest": "^26.0.1",
+    "jest-config": "^26.0.1",
+    "lint-staged": "^8.0.0",
+    "prettier": "^1.14.3",
+    "rimraf": "^2.6.2",
+    "shelljs": "^0.8.3",
+    "ts-jest": "^26.0.0",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.15.0",
+    "tslint-config-standard": "^8.0.1",
+    "typedoc": "^0.17.7",
+    "typescript": "^3.9.3"
+  },
+  "dependencies": {
+    "agentkeepalive": "^4.1.2",
+    "chalk": "^4.0.0",
+    "mkdirp": "^1.0.4",
+    "node-forge": "^0.9.1",
+    "tunnel-agent": "^0.6.0"
+  }
+}

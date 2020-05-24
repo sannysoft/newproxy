@@ -10,4 +10,5 @@ export interface RequestOptions {
     agent: any;
     customSocketId?: number | undefined;
     host?: string | undefined;
+    url: string;
 }

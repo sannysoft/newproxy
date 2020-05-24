@@ -27,7 +27,7 @@ var CommonUtils = /** @class */ (function () {
     function CommonUtils() {
     }
     CommonUtils.getOptionsFromRequest = function (req, ssl, externalProxy) {
-        var _a, _b, _c, _d, _e, _f, _g;
+        var _a, _b, _c, _d, _e, _f, _g, _h;
         var urlObject = url.parse((_a = req === null || req === void 0 ? void 0 : req.url) !== null && _a !== void 0 ? _a : makeErr('No URL specified'));
         var defaultPort = ssl ? 443 : 80;
         var protocol = ssl ? 'https:' : 'http:';
@@ -59,13 +59,14 @@ var CommonUtils = /** @class */ (function () {
             path: (_e = urlObject.path) !== null && _e !== void 0 ? _e : makeErr('No request path set'),
             headers: req.headers,
             agent: agent,
+            url: protocol + "//" + requestHost + ((_f = urlObject.path) !== null && _f !== void 0 ? _f : ''),
         };
         if (protocol === 'http:' &&
             externalProxyHelper &&
             externalProxyHelper.getProtocol() === 'http:') {
             var externalURL = externalProxyHelper.getUrlObject();
-            options.hostname = (_f = externalURL.hostname) !== null && _f !== void 0 ? _f : makeErr('No external proxy hostname');
-            options.port = Number((_g = externalURL.port) !== null && _g !== void 0 ? _g : makeErr('No external proxy port'));
+            options.hostname = (_g = externalURL.hostname) !== null && _g !== void 0 ? _g : makeErr('No external proxy hostname');
+            options.port = Number((_h = externalURL.port) !== null && _h !== void 0 ? _h : makeErr('No external proxy port'));
             // support non-transparent proxy
             options.path = "http://" + urlObject.host + urlObject.path;
         }

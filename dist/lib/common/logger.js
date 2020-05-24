@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.logError = exports.log = exports.setErrorLoggerConfig = exports.setLoggerConfig = void 0;
 var util = require("util");
-var chalk_1 = require("chalk");
+var chalk = require("chalk");
 var debug = util.debuglog('newproxy');
 var loggerConfig = false;
 var errorLoggerConfig = false;
@@ -37,7 +37,7 @@ function logError(message) {
             console.error(message);
         }
         else {
-            log(message, chalk_1.default.red);
+            log(message, chalk.red);
         }
     }
     else {

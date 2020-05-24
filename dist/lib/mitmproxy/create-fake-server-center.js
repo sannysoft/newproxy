@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createFakeServerCenter = void 0;
 var fs = require("fs");
 var forge = require("node-forge");
-var chalk_1 = require("chalk");
+var chalk = require("chalk");
 var fake_servers_center_1 = require("../tls/fake-servers-center");
 var logger_1 = require("../common/logger");
 function createFakeServerCenter(proxyConfig, requestHandler, upgradeHandler) {
@@ -18,7 +18,7 @@ function createFakeServerCenter(proxyConfig, requestHandler, upgradeHandler) {
         caKey = forge.pki.privateKeyFromPem(caKeyPem);
     }
     catch (error) {
-        logger_1.log("Can not find `CA certificate` or `CA key`.", chalk_1.default.red);
+        logger_1.log("Can not find `CA certificate` or `CA key`.", chalk.red);
         throw error;
     }
     return new fake_servers_center_1.FakeServersCenter(100, requestHandler, upgradeHandler, {

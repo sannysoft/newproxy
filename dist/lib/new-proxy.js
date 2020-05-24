@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var http = require("http");
-var chalk_1 = require("chalk");
+var chalk = require("chalk");
 var tls_utils_1 = require("./tls/tls-utils");
 var create_upgrade_handler_1 = require("./mitmproxy/create-upgrade-handler");
 var create_fake_server_center_1 = require("./mitmproxy/create-fake-server-center");
@@ -57,8 +57,8 @@ var NewProxy = /** @class */ (function () {
             caCertPath = rs.caCertPath;
             caKeyPath = rs.caKeyPath;
             if (rs.create) {
-                logger_1.log("CA Cert saved in: " + caCertPath, chalk_1.default.cyan);
-                logger_1.log("CA private key saved in: " + caKeyPath, chalk_1.default.cyan);
+                logger_1.log("CA Cert saved in: " + caCertPath, chalk.cyan);
+                logger_1.log("CA private key saved in: " + caKeyPath, chalk.cyan);
             }
         }
         return {
@@ -89,7 +89,7 @@ var NewProxy = /** @class */ (function () {
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
         this.setup();
         this.server.listen(this.proxyConfig.port, function () {
-            logger_1.log("NewProxy is listening on port " + _this.proxyConfig.port, chalk_1.default.green);
+            logger_1.log("NewProxy is listening on port " + _this.proxyConfig.port, chalk.green);
             _this.server.on('error', function (e) {
                 logger_1.logError(e);
             });

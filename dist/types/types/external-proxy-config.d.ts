@@ -2,7 +2,7 @@
 import * as url from 'url';
 export declare type ExternalProxyConfig = ExternalProxyConfigObject | string;
 export declare type ExternalProxyConfigOrNull = ExternalProxyConfig | null;
-interface ExternalProxyConfigObject {
+export interface ExternalProxyConfigObject {
     url: string;
     login?: string;
     password?: string;
@@ -14,4 +14,3 @@ export declare class ExternalProxyHelper {
     getProtocol(): string;
     getLoginAndPassword(): string | undefined;
 }
-export {};

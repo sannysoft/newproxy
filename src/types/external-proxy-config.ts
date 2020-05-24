@@ -3,7 +3,7 @@ import * as url from 'url';
 export type ExternalProxyConfig = ExternalProxyConfigObject | string;
 export type ExternalProxyConfigOrNull = ExternalProxyConfig | null;
 
-interface ExternalProxyConfigObject {
+export interface ExternalProxyConfigObject {
   url: string;
   login?: string;
   password?: string;

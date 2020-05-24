@@ -26,6 +26,8 @@ export function createConnectHandler(
         sslConnectInterceptor.call(null, req, clientSocket, head)) ||
       sslConnectInterceptor === true;
 
+    if (!clientSocket.writable) return;
+
     const serverHostname = srvUrl.hostname ?? makeErr('No hostname set for https request');
     const serverPort = Number(srvUrl.port || 443);
 

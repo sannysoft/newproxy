@@ -52,6 +52,8 @@ function createConnectHandler(sslConnectInterceptor, fakeServerCenter) {
         var interceptSsl = (typeof sslConnectInterceptor === 'function' &&
             sslConnectInterceptor.call(null, req, clientSocket, head)) ||
             sslConnectInterceptor === true;
+        if (!clientSocket.writable)
+            return;
         var serverHostname = (_a = srvUrl.hostname) !== null && _a !== void 0 ? _a : common_utils_1.makeErr('No hostname set for https request');
         var serverPort = Number(srvUrl.port || 443);
         if (!interceptSsl) {

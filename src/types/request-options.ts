@@ -11,4 +11,5 @@ export interface RequestOptions {
   customSocketId?: number | undefined;
 
   host?: string | undefined;
+  url: string;
 }

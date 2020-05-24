@@ -1,6 +1,6 @@
 import * as http from 'http';
 import * as stream from 'stream';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { ProxyConfig, UserProxyConfig } from './types/proxy-config';
 import TlsUtils from './tls/tls-utils';
 import { createUpgradeHandler } from './mitmproxy/create-upgrade-handler';

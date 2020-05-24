@@ -55,7 +55,7 @@ proxy.run();
 
 ...
 
-proxy.stop()
+proxy.stop();
 ```
 
 ### Features

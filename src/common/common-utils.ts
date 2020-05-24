@@ -68,6 +68,7 @@ export class CommonUtils {
       path: urlObject.path ?? makeErr('No request path set'),
       headers: req.headers,
       agent: agent,
+      url: `${protocol}//${requestHost}${urlObject.path ?? ''}`,
     };
 
     if (

@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as forge from 'node-forge';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { FakeServersCenter } from '../tls/fake-servers-center';
 import { ProxyConfig } from '../types/proxy-config';
 import { UpgradeHandlerFn } from '../types/functions/upgrade-handler-fn';

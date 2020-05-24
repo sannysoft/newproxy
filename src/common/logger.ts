@@ -1,5 +1,5 @@
 import * as util from 'util';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { LoggingFn } from '../types/functions/log-fn';
 import { ErrorLoggingFn } from '../types/functions/error-logging-fn';
 

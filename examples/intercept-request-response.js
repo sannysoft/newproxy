@@ -38,7 +38,7 @@ const proxy = new NewProxy()
 
 process.once('SIGTERM', function(code) {
   console.log('SIGTERM received...');
-  proxy.close();
+  proxy.stop();
 });
 
 proxy.run();

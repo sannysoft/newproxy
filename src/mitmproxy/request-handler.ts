@@ -32,10 +32,14 @@ export class RequestHandler {
     this.ssl = ssl;
     this.proxyConfig = proxyConfig;
 
-    this.rOptions = CommonUtils.getOptionsFromRequest(req, ssl, proxyConfig.externalProxy);
+    this.rOptions = CommonUtils.getOptionsFromRequest(req, ssl, proxyConfig.externalProxy, res);
   }
 
   public async go(): Promise<void> {
+    if (this.res.finished) {
+      return;
+    }
+
     this.setKeepAlive();
 
     try {

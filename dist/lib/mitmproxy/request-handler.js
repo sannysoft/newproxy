@@ -47,7 +47,7 @@ var RequestHandler = /** @class */ (function () {
         this.res = res;
         this.ssl = ssl;
         this.proxyConfig = proxyConfig;
-        this.rOptions = common_utils_1.CommonUtils.getOptionsFromRequest(req, ssl, proxyConfig.externalProxy);
+        this.rOptions = common_utils_1.CommonUtils.getOptionsFromRequest(req, ssl, proxyConfig.externalProxy, res);
     }
     RequestHandler.prototype.go = function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -55,6 +55,9 @@ var RequestHandler = /** @class */ (function () {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
+                        if (this.res.finished) {
+                            return [2 /*return*/];
+                        }
                         this.setKeepAlive();
                         _b.label = 1;
                     case 1:

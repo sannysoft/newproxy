@@ -5,8 +5,7 @@ const cache = {};
 const proxy = new NewProxy()
   .sslConnectInterceptor(true)
   .requestInterceptor((rOptions, clientReq, clientRes, ssl, next) => {
-    const url = `${rOptions.protocol}//${rOptions.hostname}:${rOptions.port}${rOptions.path}`;
-    clientReq.fullUrl = url;
+    clientReq.fullUrl = rOptions.url;
 
     if (rOptions.method === 'GET') {
       // For GET requests let's see if we have it cached

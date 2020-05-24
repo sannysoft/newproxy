@@ -33,13 +33,14 @@ export class CommonUtils {
     req: http.IncomingMessage,
     ssl: boolean,
     externalProxy: ExternalProxyConfig | ExternalProxyFn | null,
+    res?: http.ServerResponse | undefined,
   ): RequestOptions {
     const urlObject = url.parse(req?.url ?? makeErr('No URL specified'));
     const defaultPort = ssl ? 443 : 80;
     const protocol = ssl ? 'https:' : 'http:';
     const headers = Object.assign({}, req.headers);
 
-    const externalProxyHelper = this.getExternalProxyHelper(externalProxy, req, ssl);
+    const externalProxyHelper = this.getExternalProxyHelper(externalProxy, req, ssl, res);
 
     delete headers['proxy-connection'];
 
@@ -104,6 +105,7 @@ export class CommonUtils {
     externalProxy: ExternalProxyConfig | ExternalProxyFn | null,
     req: http.IncomingMessage,
     ssl: boolean,
+    res?: http.ServerResponse | undefined,
   ): ExternalProxyHelper | undefined {
     let externalProxyConfig: ExternalProxyConfig | null = null;
 
@@ -112,7 +114,7 @@ export class CommonUtils {
         externalProxyConfig = externalProxy;
       } else if (typeof externalProxy === 'function') {
         try {
-          externalProxyConfig = externalProxy(req, ssl);
+          externalProxyConfig = externalProxy(req, ssl, res);
         } catch (error) {
           logError(error);
         }

@@ -1,8 +1,8 @@
 import * as http from 'http';
-import { RequestOptions } from '../request-options';
+import { ExtendedRequestOptions } from '../request-options';
 
 export type RequestInterceptorFn = (
-  requestOptions: RequestOptions,
+  requestOptions: ExtendedRequestOptions,
   clientReq: http.IncomingMessage,
   clientRes: http.ServerResponse,
   ssl: boolean,

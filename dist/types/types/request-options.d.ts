@@ -1,14 +1,10 @@
 /// <reference types="node" />
-import { IncomingHttpHeaders } from 'http';
-export interface RequestOptions {
-    protocol: string;
-    hostname: string;
-    method: string;
-    port: number;
-    path: string;
-    headers: IncomingHttpHeaders;
-    agent: any;
+import { RequestOptions, Agent } from 'http';
+export interface ExtendedRequestOptions extends RequestOptions {
     customSocketId?: number | undefined;
+    agent: Agent & {
+        getName: (options: RequestOptions) => string;
+    };
     host?: string | undefined;
     url: string;
 }

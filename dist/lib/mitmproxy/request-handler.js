@@ -37,6 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RequestHandler = void 0;
+var http_1 = require("http");
 var http = require("http");
 var https = require("https");
 var common_utils_1 = require("../common/common-utils");
@@ -134,10 +135,13 @@ var RequestHandler = /** @class */ (function () {
         var self = this;
         return new Promise(function (resolve, reject) {
             _this.rOptions.host = _this.rOptions.hostname || _this.rOptions.host || 'localhost';
-            // use the binded socket for NTLM
+            // use the bind socket for NTLM
             if (_this.rOptions.agent &&
+                _this.rOptions.agent instanceof http_1.Agent &&
                 _this.rOptions.customSocketId != null &&
+                // @ts-ignore
                 _this.rOptions.agent.getName) {
+                // @ts-ignore
                 var socketName = _this.rOptions.agent.getName(_this.rOptions);
                 var bindingSocket = _this.rOptions.agent.sockets[socketName];
                 if (bindingSocket && bindingSocket.length > 0) {
@@ -220,7 +224,8 @@ var RequestHandler = /** @class */ (function () {
         });
     };
     RequestHandler.prototype.setKeepAlive = function () {
-        if (this.rOptions.headers.connection === 'close') {
+        var _a;
+        if (((_a = this.rOptions.headers) === null || _a === void 0 ? void 0 : _a.connection) === 'close') {
             this.req.socket.setKeepAlive(false);
         }
         else if (this.rOptions.customSocketId != null) {

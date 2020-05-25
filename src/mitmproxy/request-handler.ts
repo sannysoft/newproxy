@@ -1,9 +1,9 @@
-import { ClientRequest, IncomingMessage, ServerResponse } from 'http';
+import { Agent, ClientRequest, IncomingMessage, ServerResponse } from 'http';
 import * as http from 'http';
 import * as https from 'https';
 import { CommonUtils, makeErr } from '../common/common-utils';
 import { ProxyConfig } from '../types/proxy-config';
-import { RequestOptions } from '../types/request-options';
+import { ExtendedRequestOptions } from '../types/request-options';
 import { logError } from '../common/logger';
 import connections from '../common/connections';
 
@@ -16,7 +16,7 @@ export class RequestHandler {
 
   private proxyConfig: ProxyConfig;
 
-  private readonly rOptions: RequestOptions;
+  private readonly rOptions: ExtendedRequestOptions;
 
   private proxyReq?: ClientRequest;
 
@@ -115,12 +115,16 @@ export class RequestHandler {
     return new Promise((resolve, reject) => {
       this.rOptions.host = this.rOptions.hostname || this.rOptions.host || 'localhost';
 
-      // use the binded socket for NTLM
+      // use the bind socket for NTLM
+
       if (
         this.rOptions.agent &&
+        this.rOptions.agent instanceof Agent &&
         this.rOptions.customSocketId != null &&
+        // @ts-ignore
         this.rOptions.agent.getName
       ) {
+        // @ts-ignore
         const socketName = this.rOptions.agent.getName(this.rOptions);
         const bindingSocket = this.rOptions.agent.sockets[socketName];
         if (bindingSocket && bindingSocket.length > 0) {
@@ -216,7 +220,7 @@ export class RequestHandler {
   }
 
   private setKeepAlive(): void {
-    if (this.rOptions.headers.connection === 'close') {
+    if (this.rOptions.headers?.connection === 'close') {
       this.req.socket.setKeepAlive(false);
     } else if (this.rOptions.customSocketId != null) {
       // for NTLM

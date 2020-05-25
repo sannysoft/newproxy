@@ -4,7 +4,7 @@ import * as tunnelAgent from 'tunnel-agent';
 import * as http from 'http';
 import * as AgentKeepAlive from 'agentkeepalive';
 import { ExternalProxyFn } from '../types/functions/external-proxy-fn';
-import { RequestOptions } from '../types/request-options';
+import { ExtendedRequestOptions } from '../types/request-options';
 import { logError } from './logger';
 import { ExternalProxyConfig, ExternalProxyHelper } from '../types/external-proxy-config';
 
@@ -34,7 +34,7 @@ export class CommonUtils {
     ssl: boolean,
     externalProxy: ExternalProxyConfig | ExternalProxyFn | undefined,
     res?: http.ServerResponse | undefined,
-  ): RequestOptions {
+  ): ExtendedRequestOptions {
     const urlObject = url.parse(req?.url ?? makeErr('No URL specified'));
     const defaultPort = ssl ? 443 : 80;
     const protocol = ssl ? 'https:' : 'http:';
@@ -61,7 +61,7 @@ export class CommonUtils {
 
     const requestHost: string = req.headers?.host ?? makeErr('No request hostname set');
 
-    const options: RequestOptions = {
+    const options: ExtendedRequestOptions = {
       protocol: protocol,
       hostname: requestHost.split(':')[0],
       method: req.method ?? makeErr('No request method set'),

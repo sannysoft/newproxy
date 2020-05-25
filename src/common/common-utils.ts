@@ -7,6 +7,7 @@ import { ExternalProxyFn } from '../types/functions/external-proxy-fn';
 import { ExtendedRequestOptions } from '../types/request-options';
 import { logError } from './logger';
 import { ExternalProxyConfig, ExternalProxyHelper } from '../types/external-proxy-config';
+import connections from './connections';
 
 const httpsAgent = new AgentKeepAlive.HttpsAgent({
   keepAlive: true,
@@ -114,7 +115,8 @@ export class CommonUtils {
         externalProxyConfig = externalProxy;
       } else if (typeof externalProxy === 'function') {
         try {
-          externalProxyConfig = externalProxy(req, ssl, res);
+          const connectKey = `${req.socket.remotePort}:${req.socket.localPort}`;
+          externalProxyConfig = externalProxy(req, ssl, res, connections[connectKey]);
         } catch (error) {
           logError(error);
         }

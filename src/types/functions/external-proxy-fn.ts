@@ -5,7 +5,8 @@ import { ExternalProxyConfigOrNull } from '../external-proxy-config';
 export type ExternalProxyFn = (
   clientReq: IncomingMessage,
   ssl: boolean,
-  clientRes?: ServerResponse | undefined,
+  clientRes: ServerResponse | undefined,
+  connectRequest: IncomingMessage | undefined,
 ) => ExternalProxyConfigOrNull;
 
 export type ExternalProxyNoMitmFn = (

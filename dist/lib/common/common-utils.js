@@ -7,6 +7,7 @@ var tunnelAgent = require("tunnel-agent");
 var AgentKeepAlive = require("agentkeepalive");
 var logger_1 = require("./logger");
 var external_proxy_config_1 = require("../types/external-proxy-config");
+var connections_1 = require("./connections");
 var httpsAgent = new AgentKeepAlive.HttpsAgent({
     keepAlive: true,
     timeout: 60000,
@@ -93,7 +94,8 @@ var CommonUtils = /** @class */ (function () {
             }
             else if (typeof externalProxy === 'function') {
                 try {
-                    externalProxyConfig = externalProxy(req, ssl, res);
+                    var connectKey = req.socket.remotePort + ":" + req.socket.localPort;
+                    externalProxyConfig = externalProxy(req, ssl, res, connections_1.default[connectKey]);
                 }
                 catch (error) {
                     logger_1.logError(error);

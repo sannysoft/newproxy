@@ -1,7 +1,7 @@
 import * as https from 'https';
 import * as forge from 'node-forge';
 import * as tls from 'tls';
-import { IncomingMessage } from 'http';
+import { AddressInfo } from 'net';
 import TlsUtils from './tls-utils';
 import CertAndKeyContainer from './cert-and-key-container';
 import { CaPair } from '../types/ca-pair';
@@ -10,7 +10,6 @@ import { ServerObjectPromise } from '../types/server-object-promise';
 import { UpgradeHandlerFn } from '../types/functions/upgrade-handler-fn';
 import { RequestHandlerFn } from '../types/functions/request-handler-fn';
 import { logError } from '../common/logger';
-import { AddressInfo } from 'net';
 
 const pki = forge.pki;
 

@@ -6,5 +6,6 @@ export type RequestInterceptorFn = (
   clientReq: http.IncomingMessage,
   clientRes: http.ServerResponse,
   ssl: boolean,
+  connectRequest: http.IncomingMessage | undefined,
   next: () => void,
 ) => void;

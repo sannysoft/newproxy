@@ -5,6 +5,7 @@ import { CommonUtils, makeErr } from '../common/common-utils';
 import { ProxyConfig } from '../types/proxy-config';
 import { RequestOptions } from '../types/request-options';
 import { logError } from '../common/logger';
+import connections from '../common/connections';
 
 export class RequestHandler {
   private readonly req: IncomingMessage;
@@ -170,13 +171,14 @@ export class RequestHandler {
 
       try {
         if (typeof this.proxyConfig.requestInterceptor === 'function') {
-          // const connectKey = `${this.req.socket.remotePort}:${this.req.socket.localPort}`;
+          const connectKey = `${this.req.socket.remotePort}:${this.req.socket.localPort}`;
           this.proxyConfig.requestInterceptor.call(
             null,
             this.rOptions,
             this.req,
             this.res,
             this.ssl,
+            connections[connectKey],
             next,
           );
         } else {

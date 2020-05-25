@@ -41,6 +41,7 @@ var http = require("http");
 var https = require("https");
 var common_utils_1 = require("../common/common-utils");
 var logger_1 = require("../common/logger");
+var connections_1 = require("../common/connections");
 var RequestHandler = /** @class */ (function () {
     function RequestHandler(req, res, ssl, proxyConfig) {
         this.req = req;
@@ -180,8 +181,8 @@ var RequestHandler = /** @class */ (function () {
                         };
                         try {
                             if (typeof _this.proxyConfig.requestInterceptor === 'function') {
-                                // const connectKey = `${this.req.socket.remotePort}:${this.req.socket.localPort}`;
-                                _this.proxyConfig.requestInterceptor.call(null, _this.rOptions, _this.req, _this.res, _this.ssl, next);
+                                var connectKey = _this.req.socket.remotePort + ":" + _this.req.socket.localPort;
+                                _this.proxyConfig.requestInterceptor.call(null, _this.rOptions, _this.req, _this.res, _this.ssl, connections_1.default[connectKey], next);
                             }
                             else {
                                 resolve();

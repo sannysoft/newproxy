@@ -17,9 +17,17 @@ export class ExternalProxyHelper {
   }
 
   public getUrlObject(): url.UrlWithStringQuery {
-    if (typeof this.config === 'string') return url.parse(this.config);
+    let proxy: string;
 
-    return url.parse(this.config.url);
+    if (typeof this.config === 'string') {
+      proxy = this.config;
+    } else {
+      proxy = this.config.url;
+    }
+
+    if (!proxy.startsWith('http:') && !proxy.startsWith('https:')) proxy = `http://${proxy}`;
+
+    return url.parse(proxy);
   }
 
   public getProtocol(): string {

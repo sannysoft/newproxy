@@ -1,9 +1,9 @@
 import { CaPair } from '../types/ca-pair';
 export default class CertAndKeyContainer {
     private queue;
-    private maxLength;
-    private getCertSocketTimeout;
-    private caPair;
+    private readonly maxLength;
+    private readonly getCertSocketTimeout;
+    private readonly caPair;
     constructor(maxLength: number | undefined, getCertSocketTimeout: number | undefined, caPair: CaPair);
     private addCertPromise;
     getCertPromise(hostname: string, port: number): Promise<CaPair>;

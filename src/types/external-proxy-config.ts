@@ -1,7 +1,7 @@
 import * as url from 'url';
 
 export type ExternalProxyConfig = ExternalProxyConfigObject | string;
-export type ExternalProxyConfigOrNull = ExternalProxyConfig | null;
+export type ExternalProxyConfigOrNull = ExternalProxyConfig | undefined;
 
 export interface ExternalProxyConfigObject {
   url: string;

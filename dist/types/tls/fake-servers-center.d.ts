@@ -4,7 +4,7 @@ import { UpgradeHandlerFn } from '../types/functions/upgrade-handler-fn';
 import { RequestHandlerFn } from '../types/functions/request-handler-fn';
 export declare class FakeServersCenter {
     private queue;
-    private readonly maxLength;
+    private readonly maxFakeServersCount;
     private certAndKeyContainer;
     private readonly requestHandler;
     private readonly upgradeHandler;

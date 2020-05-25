@@ -1,8 +1,19 @@
 import NewProxy from 'newproxy';
 
 const proxy = new NewProxy()
-  .sslConnectInterceptor(true)
-  .externalProxy((clientReq, ssl) => {
+  .sslMitm((req, clientSocket, head) => {
+    if (req.headers['host']?.includes('google.com') === true) {
+      // Do not MITM google.com
+      return false;
+    }
+    return true;
+  })
+  .externalProxyNoMitm({
+    url: 'http://127.0.0.1:8888',
+    login: 'test',
+    password: '12345',
+  })
+  .externalProxy((clientReq, ssl, clientRes, connectReq) => {
     let host = clientReq['headers']['host'];
 
     if (host?.includes('google.com')) {

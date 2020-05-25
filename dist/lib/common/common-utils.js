@@ -86,7 +86,7 @@ var CommonUtils = /** @class */ (function () {
         return options;
     };
     CommonUtils.getExternalProxyHelper = function (externalProxy, req, ssl, res) {
-        var externalProxyConfig = null;
+        var externalProxyConfig;
         if (externalProxy) {
             if (typeof externalProxy === 'string') {
                 externalProxyConfig = externalProxy;

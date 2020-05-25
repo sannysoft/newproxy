@@ -90,7 +90,7 @@ var RequestHandler = /** @class */ (function () {
                         error_1 = _b.sent();
                         if (!this.res.finished) {
                             this.res.writeHead(500);
-                            this.res.write("Proxy Warning:\n\n " + error_1.toString());
+                            this.res.write("Proxy Warning:\r\n\r\n " + error_1.toString());
                             this.res.end();
                         }
                         logger_1.logError(error_1);

@@ -1,6 +1,7 @@
 import * as https from 'https';
 import * as forge from 'node-forge';
 import * as tls from 'tls';
+import { IncomingMessage } from 'http';
 import TlsUtils from './tls-utils';
 import CertAndKeyContainer from './cert-and-key-container';
 import { CaPair } from '../types/ca-pair';
@@ -9,13 +10,14 @@ import { ServerObjectPromise } from '../types/server-object-promise';
 import { UpgradeHandlerFn } from '../types/functions/upgrade-handler-fn';
 import { RequestHandlerFn } from '../types/functions/request-handler-fn';
 import { logError } from '../common/logger';
+import { AddressInfo } from 'net';
 
 const pki = forge.pki;
 
 export class FakeServersCenter {
   private queue: ServerObjectPromise[] = [];
 
-  private readonly maxLength: number = 100;
+  private readonly maxFakeServersCount: number = 100;
 
   private certAndKeyContainer: CertAndKeyContainer;
 
@@ -30,14 +32,14 @@ export class FakeServersCenter {
     caPair: CaPair,
     getCertSocketTimeout: number,
   ) {
-    this.maxLength = maxLength;
+    this.maxFakeServersCount = maxLength;
     this.requestHandler = requestHandler;
     this.upgradeHandler = upgradeHandler;
     this.certAndKeyContainer = new CertAndKeyContainer(maxLength, getCertSocketTimeout, caPair);
   }
 
   private addServerPromise(serverPromiseObj: ServerObjectPromise): ServerObjectPromise {
-    if (this.queue.length >= this.maxLength) {
+    if (this.queue.length >= this.maxFakeServersCount) {
       const delServerObj = this.queue.shift();
       try {
         // eslint-disable-next-line no-unused-expressions
@@ -115,9 +117,8 @@ export class FakeServersCenter {
 
     return new Promise<ServerObject>(resolve => {
       fakeServer.listen(0, () => {
-        const address = fakeServer.address();
-        // @ts-ignore
-        serverObj.port = address?.port;
+        const address = fakeServer.address() as AddressInfo;
+        serverObj.port = address.port;
       });
 
       fakeServer.on('request', (req, res) => {

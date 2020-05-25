@@ -48,15 +48,15 @@ var FakeServersCenter = /** @class */ (function () {
     function FakeServersCenter(maxLength, requestHandler, upgradeHandler, caPair, getCertSocketTimeout) {
         if (maxLength === void 0) { maxLength = 100; }
         this.queue = [];
-        this.maxLength = 100;
-        this.maxLength = maxLength;
+        this.maxFakeServersCount = 100;
+        this.maxFakeServersCount = maxLength;
         this.requestHandler = requestHandler;
         this.upgradeHandler = upgradeHandler;
         this.certAndKeyContainer = new cert_and_key_container_1.default(maxLength, getCertSocketTimeout, caPair);
     }
     FakeServersCenter.prototype.addServerPromise = function (serverPromiseObj) {
         var _a;
-        if (this.queue.length >= this.maxLength) {
+        if (this.queue.length >= this.maxFakeServersCount) {
             var delServerObj = this.queue.shift();
             try {
                 // eslint-disable-next-line no-unused-expressions
@@ -134,8 +134,7 @@ var FakeServersCenter = /** @class */ (function () {
                         return [2 /*return*/, new Promise(function (resolve) {
                                 fakeServer.listen(0, function () {
                                     var address = fakeServer.address();
-                                    // @ts-ignore
-                                    serverObj.port = address === null || address === void 0 ? void 0 : address.port;
+                                    serverObj.port = address.port;
                                 });
                                 fakeServer.on('request', function (req, res) {
                                     var ssl = true;

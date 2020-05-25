@@ -20,7 +20,7 @@ npm i newproxy
 import NewProxy from 'newproxy';
 
 const proxy = new NewProxy()
-  .sslConnectInterceptor((req, clientSocket, head) => true)
+  .sslMitm((req, clientSocket, head) => true)
   .requestInterceptor((rOptions, clientReq, clientRes, ssl, next) => {
     clientReq.setTimeout(10000); // Set request timeout to 10 seconds
 
@@ -48,6 +48,7 @@ const proxy = new NewProxy()
 
     next();
   })
+  .externalProxyNoMitm('http://127.0.0.1:8800'); // Set external proxy for non-MITM SSL requests
   .externalProxy('http://127.0.0.1:8888'); // We can set external proxy statically or by fn
   
 // Start listening 

@@ -7,7 +7,7 @@ const proxy = new NewProxy()
   .errorLog(error => {
     console.error(error);
   })
-  .sslConnectInterceptor(() => true)
+  .sslMitm(() => true)
   .requestInterceptor((rOptions, clientReq, clientRes, ssl, next) => {
     clientReq.setTimeout(10000); // Set request timeout to 10 seconds
 

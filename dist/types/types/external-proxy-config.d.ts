@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import * as url from 'url';
 export declare type ExternalProxyConfig = ExternalProxyConfigObject | string;
-export declare type ExternalProxyConfigOrNull = ExternalProxyConfig | null;
+export declare type ExternalProxyConfigOrNull = ExternalProxyConfig | undefined;
 export interface ExternalProxyConfigObject {
     url: string;
     login?: string;

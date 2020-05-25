@@ -9,11 +9,11 @@ import { logError } from '../common/logger';
 export default class CertAndKeyContainer {
   private queue: CertPromise[] = [];
 
-  private maxLength = 1000;
+  private readonly maxLength: number;
 
-  private getCertSocketTimeout = 2000;
+  private readonly getCertSocketTimeout: number;
 
-  private caPair: CaPair;
+  private readonly caPair: CaPair;
 
   public constructor(maxLength = 1000, getCertSocketTimeout = 2 * 1000, caPair: CaPair) {
     this.maxLength = maxLength;

@@ -3,7 +3,7 @@ import NewProxy from 'newproxy';
 const proxy = new NewProxy()
   .log(false)
   .errorLog(true)
-  .sslConnectInterceptor((req, clientSocket, head) => {
+  .sslMitm((req, clientSocket, head) => {
     if (req.headers['host']?.includes('google.com') === true) {
       // Do not MITM google.com
       return false;

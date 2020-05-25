@@ -8,8 +8,6 @@ var CertAndKeyContainer = /** @class */ (function () {
         if (maxLength === void 0) { maxLength = 1000; }
         if (getCertSocketTimeout === void 0) { getCertSocketTimeout = 2 * 1000; }
         this.queue = [];
-        this.maxLength = 1000;
-        this.getCertSocketTimeout = 2000;
         this.maxLength = maxLength;
         this.getCertSocketTimeout = getCertSocketTimeout;
         this.caPair = caPair;

@@ -21,8 +21,8 @@ var NewProxy = /** @class */ (function () {
         this.proxyConfig.port = port;
         return this;
     };
-    NewProxy.prototype.sslConnectInterceptor = function (value) {
-        this.proxyConfig.sslConnectInterceptor = value;
+    NewProxy.prototype.sslMitm = function (value) {
+        this.proxyConfig.sslMitm = value;
         return this;
     };
     NewProxy.prototype.requestInterceptor = function (value) {
@@ -50,6 +50,10 @@ var NewProxy = /** @class */ (function () {
         this.proxyConfig.externalProxy = value;
         return this;
     };
+    NewProxy.prototype.externalProxyNoMitm = function (value) {
+        this.proxyConfig.externalProxyNoMitm = value;
+        return this;
+    };
     NewProxy.setDefaultsForConfig = function (userConfig) {
         var caCertPath = userConfig.caCertPath, caKeyPath = userConfig.caKeyPath;
         if (!userConfig.caCertPath || !userConfig.caKeyPath) {
@@ -65,11 +69,12 @@ var NewProxy = /** @class */ (function () {
             port: userConfig.port || 6789,
             log: userConfig.log || true,
             errorLog: userConfig.errorLog || true,
-            sslConnectInterceptor: userConfig.sslConnectInterceptor || undefined,
+            sslMitm: userConfig.sslMitm || undefined,
             requestInterceptor: userConfig.requestInterceptor || undefined,
             responseInterceptor: userConfig.responseInterceptor || undefined,
             getCertSocketTimeout: userConfig.getCertSocketTimeout || 10000,
-            externalProxy: userConfig.externalProxy || null,
+            externalProxy: userConfig.externalProxy || undefined,
+            externalProxyNoMitm: userConfig.externalProxyNoMitm || undefined,
             caCertPath: caCertPath !== null && caCertPath !== void 0 ? caCertPath : common_utils_1.makeErr('No caCertPath'),
             caKeyPath: caKeyPath !== null && caKeyPath !== void 0 ? caKeyPath : common_utils_1.makeErr('No caKeyPath'),
         };
@@ -81,7 +86,7 @@ var NewProxy = /** @class */ (function () {
         this.requestHandler = create_request_handler_1.createRequestHandler(this.proxyConfig);
         this.upgradeHandler = create_upgrade_handler_1.createUpgradeHandler(this.proxyConfig);
         this.fakeServersCenter = create_fake_server_center_1.createFakeServerCenter(this.proxyConfig, this.requestHandler, this.upgradeHandler);
-        this.connectHandler = create_connect_handler_1.createConnectHandler(this.proxyConfig.sslConnectInterceptor, this.fakeServersCenter);
+        this.connectHandler = create_connect_handler_1.createConnectHandler(this.proxyConfig, this.fakeServersCenter);
     };
     NewProxy.prototype.run = function () {
         var _this = this;
@@ -98,9 +103,9 @@ var NewProxy = /** @class */ (function () {
                 _this.requestHandler(req, res, ssl);
             });
             // tunneling for https
-            _this.server.on('connect', function (req, clientSocket, head) {
+            _this.server.on('connect', function (connectRequest, clientSocket, head) {
                 clientSocket.on('error', function () { });
-                _this.connectHandler(req, clientSocket, head);
+                _this.connectHandler(connectRequest, clientSocket, head);
             });
             // TODO: handle WebSocket
             _this.server.on('upgrade', function (req, socket, head) {

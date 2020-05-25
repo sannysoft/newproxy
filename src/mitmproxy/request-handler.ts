@@ -68,7 +68,7 @@ export class RequestHandler {
     } catch (error) {
       if (!this.res.finished) {
         this.res.writeHead(500);
-        this.res.write(`Proxy Warning:\n\n ${error.toString()}`);
+        this.res.write(`Proxy Warning:\r\n\r\n ${error.toString()}`);
         this.res.end();
       }
 

@@ -3,7 +3,7 @@ import NewProxy from 'newproxy';
 const cache = {};
 
 const proxy = new NewProxy()
-  .sslConnectInterceptor(true)
+  .sslMitm(true)
   .requestInterceptor((rOptions, clientReq, clientRes, ssl, next) => {
     clientReq.fullUrl = rOptions.url;
 

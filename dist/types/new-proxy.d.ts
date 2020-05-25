@@ -1,10 +1,11 @@
 import { ProxyConfig, UserProxyConfig } from './types/proxy-config';
-import { SslConnectInterceptorFn } from './types/functions/ssl-connect-interceptor';
+import { SslMitmFn } from './types/functions/ssl-connect-interceptor';
 import { RequestInterceptorFn } from './types/functions/request-interceptor-fn';
 import { ResponseInterceptorFn } from './types/functions/response-interceptor-fn';
-import { ExternalProxyFn } from './types/functions/external-proxy-fn';
+import { ExternalProxyFn, ExternalProxyNoMitmFn } from './types/functions/external-proxy-fn';
 import { LoggingFn } from './types/functions/log-fn';
 import { ErrorLoggingFn } from './types/functions/error-logging-fn';
+import { ExternalProxyConfig } from './types/external-proxy-config';
 export default class NewProxy {
     protected proxyConfig: ProxyConfig;
     private server;
@@ -14,13 +15,14 @@ export default class NewProxy {
     private connectHandler?;
     constructor(userProxyConfig?: UserProxyConfig);
     port(port: number): NewProxy;
-    sslConnectInterceptor(value: SslConnectInterceptorFn | boolean): NewProxy;
+    sslMitm(value: SslMitmFn | boolean): NewProxy;
     requestInterceptor(value: RequestInterceptorFn): NewProxy;
     responseInterceptor(value: ResponseInterceptorFn): NewProxy;
     log(value: boolean | LoggingFn): NewProxy;
     errorLog(value: boolean | ErrorLoggingFn): NewProxy;
     ca(caKeyPath: string, caCertPath: string): NewProxy;
-    externalProxy(value: string | ExternalProxyFn): NewProxy;
+    externalProxy(value: ExternalProxyConfig | ExternalProxyFn | undefined): NewProxy;
+    externalProxyNoMitm(value: ExternalProxyConfig | ExternalProxyNoMitmFn | undefined): NewProxy;
     private static setDefaultsForConfig;
     setup(): void;
     run(): void;

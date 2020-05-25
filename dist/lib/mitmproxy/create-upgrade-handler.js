@@ -8,7 +8,7 @@ var logger_1 = require("../common/logger");
 // create connectHandler function
 function createUpgradeHandler(proxyConfig) {
     return function upgradeHandler(req, clientSocket, head, ssl) {
-        var clientOptions = common_utils_1.CommonUtils.getOptionsFromRequest(req, ssl, proxyConfig.externalProxy);
+        var clientOptions = common_utils_1.CommonUtils.getOptionsFromRequest(req, ssl, proxyConfig.externalProxy, undefined);
         var proxyReq = (ssl ? https_1.default : http_1.default).request(clientOptions);
         proxyReq.on('error', function (error) {
             logger_1.logError(error);

@@ -10,16 +10,17 @@ import { createRequestHandler } from './mitmproxy/create-request-handler';
 import { caConfig } from './common/ca-config';
 import { log, logError, setErrorLoggerConfig, setLoggerConfig } from './common/logger';
 import { makeErr } from './common/common-utils';
-import { SslConnectInterceptorFn } from './types/functions/ssl-connect-interceptor';
+import { SslMitmFn } from './types/functions/ssl-connect-interceptor';
 import { RequestInterceptorFn } from './types/functions/request-interceptor-fn';
 import { ResponseInterceptorFn } from './types/functions/response-interceptor-fn';
-import { ExternalProxyFn } from './types/functions/external-proxy-fn';
+import { ExternalProxyFn, ExternalProxyNoMitmFn } from './types/functions/external-proxy-fn';
 import { LoggingFn } from './types/functions/log-fn';
 import { RequestHandlerFn } from './types/functions/request-handler-fn';
 import { UpgradeHandlerFn } from './types/functions/upgrade-handler-fn';
 import { ConnectHandlerFn } from './types/functions/connect-handler-fn';
 import { FakeServersCenter } from './tls/fake-servers-center';
 import { ErrorLoggingFn } from './types/functions/error-logging-fn';
+import { ExternalProxyConfig } from './types/external-proxy-config';
 
 // eslint-disable-next-line import/no-default-export
 export default class NewProxy {
@@ -45,8 +46,8 @@ export default class NewProxy {
     return this;
   }
 
-  public sslConnectInterceptor(value: SslConnectInterceptorFn | boolean): NewProxy {
-    this.proxyConfig.sslConnectInterceptor = value;
+  public sslMitm(value: SslMitmFn | boolean): NewProxy {
+    this.proxyConfig.sslMitm = value;
     return this;
   }
 
@@ -76,8 +77,15 @@ export default class NewProxy {
     return this;
   }
 
-  public externalProxy(value: string | ExternalProxyFn): NewProxy {
+  public externalProxy(value: ExternalProxyConfig | ExternalProxyFn | undefined): NewProxy {
     this.proxyConfig.externalProxy = value;
+    return this;
+  }
+
+  public externalProxyNoMitm(
+    value: ExternalProxyConfig | ExternalProxyNoMitmFn | undefined,
+  ): NewProxy {
+    this.proxyConfig.externalProxyNoMitm = value;
     return this;
   }
 
@@ -101,13 +109,14 @@ export default class NewProxy {
       log: userConfig.log || true,
       errorLog: userConfig.errorLog || true,
 
-      sslConnectInterceptor: userConfig.sslConnectInterceptor || undefined,
+      sslMitm: userConfig.sslMitm || undefined,
       requestInterceptor: userConfig.requestInterceptor || undefined,
       responseInterceptor: userConfig.responseInterceptor || undefined,
 
       getCertSocketTimeout: userConfig.getCertSocketTimeout || 10000,
 
-      externalProxy: userConfig.externalProxy || null,
+      externalProxy: userConfig.externalProxy || undefined,
+      externalProxyNoMitm: userConfig.externalProxyNoMitm || undefined,
 
       caCertPath: caCertPath ?? makeErr('No caCertPath'),
       caKeyPath: caKeyPath ?? makeErr('No caKeyPath'),
@@ -122,16 +131,14 @@ export default class NewProxy {
 
     this.requestHandler = createRequestHandler(this.proxyConfig);
     this.upgradeHandler = createUpgradeHandler(this.proxyConfig);
+
     this.fakeServersCenter = createFakeServerCenter(
       this.proxyConfig,
       this.requestHandler,
       this.upgradeHandler,
     );
 
-    this.connectHandler = createConnectHandler(
-      this.proxyConfig.sslConnectInterceptor,
-      this.fakeServersCenter,
-    );
+    this.connectHandler = createConnectHandler(this.proxyConfig, this.fakeServersCenter);
   }
 
   public run(): void {
@@ -155,9 +162,9 @@ export default class NewProxy {
       // tunneling for https
       this.server.on(
         'connect',
-        (req: http.IncomingMessage, clientSocket: stream.Duplex, head: Buffer) => {
+        (connectRequest: http.IncomingMessage, clientSocket: stream.Duplex, head: Buffer) => {
           clientSocket.on('error', () => {});
-          this.connectHandler!!(req, clientSocket, head);
+          this.connectHandler!!(connectRequest, clientSocket, head);
         },
       );
 

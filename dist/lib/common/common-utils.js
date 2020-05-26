@@ -68,14 +68,21 @@ var CommonUtils = /** @class */ (function () {
             agent: agent,
             url: protocol + "//" + requestHost + ((_f = urlObject.path) !== null && _f !== void 0 ? _f : ''),
         };
-        if (protocol === 'http:' &&
-            externalProxyHelper &&
-            externalProxyHelper.getProtocol() === 'http:') {
-            var externalURL = externalProxyHelper.getUrlObject();
-            options.hostname = (_g = externalURL.hostname) !== null && _g !== void 0 ? _g : makeErr('No external proxy hostname');
-            options.port = Number((_h = externalURL.port) !== null && _h !== void 0 ? _h : makeErr('No external proxy port'));
-            // support non-transparent proxy
-            options.path = "http://" + urlObject.host + urlObject.path;
+        try {
+            if (protocol === 'http:' &&
+                externalProxyHelper &&
+                externalProxyHelper.getProtocol() === 'http:') {
+                var externalURL = externalProxyHelper.getUrlObject();
+                var host = (_g = externalURL.hostname) !== null && _g !== void 0 ? _g : makeErr("No external proxy hostname set - " + externalProxy);
+                var port = Number((_h = externalURL.port) !== null && _h !== void 0 ? _h : makeErr("No external proxy port set - " + externalProxy));
+                options.hostname = host;
+                options.port = port;
+                // support non-transparent proxy
+                options.path = "http://" + urlObject.host + urlObject.path;
+            }
+        }
+        catch (error) {
+            logger_1.logError(error, 'External proxy parsing problem');
         }
         // TODO: Check if we ever have customSocketId
         // mark a socketId for Agent to bind socket for NTLM

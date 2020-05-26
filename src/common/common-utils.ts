@@ -78,17 +78,28 @@ export class CommonUtils {
       url: `${protocol}//${requestHost}${urlObject.path ?? ''}`,
     };
 
-    if (
-      protocol === 'http:' &&
-      externalProxyHelper &&
-      externalProxyHelper.getProtocol() === 'http:'
-    ) {
-      const externalURL = externalProxyHelper.getUrlObject();
-      options.hostname = externalURL.hostname ?? makeErr('No external proxy hostname');
-      options.port = Number(externalURL.port ?? makeErr('No external proxy port'));
+    try {
+      if (
+        protocol === 'http:' &&
+        externalProxyHelper &&
+        externalProxyHelper.getProtocol() === 'http:'
+      ) {
+        const externalURL = externalProxyHelper.getUrlObject();
+        const host =
+          externalURL.hostname ?? makeErr(`No external proxy hostname set - ${externalProxy}`);
 
-      // support non-transparent proxy
-      options.path = `http://${urlObject.host}${urlObject.path}`;
+        const port = Number(
+          externalURL.port ?? makeErr(`No external proxy port set - ${externalProxy}`),
+        );
+
+        options.hostname = host;
+        options.port = port;
+
+        // support non-transparent proxy
+        options.path = `http://${urlObject.host}${urlObject.path}`;
+      }
+    } catch (error) {
+      logError(error, 'External proxy parsing problem');
     }
 
     // TODO: Check if we ever have customSocketId

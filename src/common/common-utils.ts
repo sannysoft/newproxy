@@ -36,12 +36,17 @@ export class CommonUtils {
     externalProxy: ExternalProxyConfig | ExternalProxyFn | undefined,
     res?: http.ServerResponse | undefined,
   ): ExtendedRequestOptions {
-    const urlObject = url.parse(req?.url ?? makeErr('No URL specified'));
+    const urlObject = url.parse(req?.url ?? makeErr('No URL set for the request'));
     const defaultPort = ssl ? 443 : 80;
     const protocol = ssl ? 'https:' : 'http:';
     const headers = Object.assign({}, req.headers);
 
-    const externalProxyHelper = this.getExternalProxyHelper(externalProxy, req, ssl, res);
+    let externalProxyHelper = null;
+    try {
+      externalProxyHelper = this.getExternalProxyHelper(externalProxy, req, ssl, res);
+    } catch (error) {
+      logError(error, 'Wrong external proxy set');
+    }
 
     delete headers['proxy-connection'];
 

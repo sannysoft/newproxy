@@ -50,9 +50,16 @@ function createConnectHandler(proxyConfig, fakeServerCenter) {
         var _this = this;
         var _a;
         var srvUrl = url.parse("https://" + connectRequest.url);
-        var interceptSsl = (typeof proxyConfig.sslMitm === 'function' &&
-            proxyConfig.sslMitm.call(null, connectRequest, clientSocket, head)) ||
-            proxyConfig.sslMitm === true;
+        var interceptSsl = false;
+        try {
+            interceptSsl =
+                (typeof proxyConfig.sslMitm === 'function' &&
+                    proxyConfig.sslMitm.call(null, connectRequest, clientSocket, head)) ||
+                    proxyConfig.sslMitm === true;
+        }
+        catch (error) {
+            logger_1.logError(error, 'Error at sslMitm function');
+        }
         if (!clientSocket.writable)
             return;
         var serverHostname = (_a = srvUrl.hostname) !== null && _a !== void 0 ? _a : common_utils_1.makeErr('No hostname set for https request');

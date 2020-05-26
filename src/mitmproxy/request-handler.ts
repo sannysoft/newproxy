@@ -44,7 +44,16 @@ export class RequestHandler {
     this.setKeepAlive();
 
     try {
-      await this.interceptRequest();
+      try {
+        await this.interceptRequest();
+      } catch (error) {
+        logError(error, 'Problem at request interception');
+        if (!this.res.finished) {
+          this.res.writeHead(500);
+          this.res.write(`Proxy Warning:\r\n\r\n${error.toString()}`);
+          this.res.end();
+        }
+      }
 
       if (this.res.finished) {
         return;
@@ -59,7 +68,16 @@ export class RequestHandler {
         return;
       }
 
-      await this.interceptResponse();
+      try {
+        await this.interceptResponse();
+      } catch (error) {
+        logError(error, 'Problem at response interception');
+        if (!this.res.finished) {
+          this.res.writeHead(500);
+          this.res.write(`Proxy Warning:\r\n\r\n${error.toString()}`);
+          this.res.end();
+        }
+      }
 
       if (this.res.finished) {
         return;

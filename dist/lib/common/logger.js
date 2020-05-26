@@ -28,13 +28,16 @@ function log(message, colorFn) {
     }
 }
 exports.log = log;
-function logError(message) {
+function logError(message, comment) {
+    var fullComment = comment !== null && comment !== void 0 ? comment : '';
+    if (fullComment !== '')
+        fullComment += '  ';
     if (typeof errorLoggerConfig === 'function') {
-        errorLoggerConfig(message);
+        errorLoggerConfig(message, comment);
     }
     else if (loggerConfig) {
         if (message instanceof Error) {
-            console.error(message);
+            console.error(fullComment, message);
         }
         else {
             log(message, chalk.red);

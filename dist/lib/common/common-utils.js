@@ -29,11 +29,17 @@ var CommonUtils = /** @class */ (function () {
     }
     CommonUtils.getOptionsFromRequest = function (req, ssl, externalProxy, res) {
         var _a, _b, _c, _d, _e, _f, _g, _h;
-        var urlObject = url.parse((_a = req === null || req === void 0 ? void 0 : req.url) !== null && _a !== void 0 ? _a : makeErr('No URL specified'));
+        var urlObject = url.parse((_a = req === null || req === void 0 ? void 0 : req.url) !== null && _a !== void 0 ? _a : makeErr('No URL set for the request'));
         var defaultPort = ssl ? 443 : 80;
         var protocol = ssl ? 'https:' : 'http:';
         var headers = Object.assign({}, req.headers);
-        var externalProxyHelper = this.getExternalProxyHelper(externalProxy, req, ssl, res);
+        var externalProxyHelper = null;
+        try {
+            externalProxyHelper = this.getExternalProxyHelper(externalProxy, req, ssl, res);
+        }
+        catch (error) {
+            logger_1.logError(error, 'Wrong external proxy set');
+        }
         delete headers['proxy-connection'];
         var agent = false;
         if (!externalProxyHelper) {

@@ -26,10 +26,15 @@ export function createConnectHandler(
   ) {
     const srvUrl = url.parse(`https://${connectRequest.url}`);
 
-    const interceptSsl =
-      (typeof proxyConfig.sslMitm === 'function' &&
-        proxyConfig.sslMitm.call(null, connectRequest, clientSocket, head)) ||
-      proxyConfig.sslMitm === true;
+    let interceptSsl = false;
+    try {
+      interceptSsl =
+        (typeof proxyConfig.sslMitm === 'function' &&
+          proxyConfig.sslMitm.call(null, connectRequest, clientSocket, head)) ||
+        proxyConfig.sslMitm === true;
+    } catch (error) {
+      logError(error, 'Error at sslMitm function');
+    }
 
     if (!clientSocket.writable) return;
 

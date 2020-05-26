@@ -1,1 +1,1 @@
-export declare type ErrorLoggingFn = (error: Error) => void;
+export declare type ErrorLoggingFn = (error: Error, comment?: string | undefined) => void;

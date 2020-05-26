@@ -53,7 +53,7 @@ var RequestHandler = /** @class */ (function () {
     }
     RequestHandler.prototype.go = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var proxyRequestPromise, _a, error_1;
+            var error_1, proxyRequestPromise, _a, error_2, error_3;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -63,10 +63,24 @@ var RequestHandler = /** @class */ (function () {
                         this.setKeepAlive();
                         _b.label = 1;
                     case 1:
-                        _b.trys.push([1, 5, , 6]);
-                        return [4 /*yield*/, this.interceptRequest()];
+                        _b.trys.push([1, 11, , 12]);
+                        _b.label = 2;
                     case 2:
+                        _b.trys.push([2, 4, , 5]);
+                        return [4 /*yield*/, this.interceptRequest()];
+                    case 3:
                         _b.sent();
+                        return [3 /*break*/, 5];
+                    case 4:
+                        error_1 = _b.sent();
+                        logger_1.logError(error_1, 'Problem at request interception');
+                        if (!this.res.finished) {
+                            this.res.writeHead(500);
+                            this.res.write("Proxy Warning:\r\n\r\n" + error_1.toString());
+                            this.res.end();
+                        }
+                        return [3 /*break*/, 5];
+                    case 5:
                         if (this.res.finished) {
                             return [2 /*return*/];
                         }
@@ -74,30 +88,44 @@ var RequestHandler = /** @class */ (function () {
                         // Wait for proxy to process the full request
                         _a = this;
                         return [4 /*yield*/, proxyRequestPromise];
-                    case 3:
+                    case 6:
                         // Wait for proxy to process the full request
                         _a.proxyRes = _b.sent();
                         if (this.res.finished) {
                             return [2 /*return*/];
                         }
+                        _b.label = 7;
+                    case 7:
+                        _b.trys.push([7, 9, , 10]);
                         return [4 /*yield*/, this.interceptResponse()];
-                    case 4:
+                    case 8:
                         _b.sent();
+                        return [3 /*break*/, 10];
+                    case 9:
+                        error_2 = _b.sent();
+                        logger_1.logError(error_2, 'Problem at response interception');
+                        if (!this.res.finished) {
+                            this.res.writeHead(500);
+                            this.res.write("Proxy Warning:\r\n\r\n" + error_2.toString());
+                            this.res.end();
+                        }
+                        return [3 /*break*/, 10];
+                    case 10:
                         if (this.res.finished) {
                             return [2 /*return*/];
                         }
                         this.sendHeadersAndPipe();
-                        return [3 /*break*/, 6];
-                    case 5:
-                        error_1 = _b.sent();
+                        return [3 /*break*/, 12];
+                    case 11:
+                        error_3 = _b.sent();
                         if (!this.res.finished) {
                             this.res.writeHead(500);
-                            this.res.write("Proxy Warning:\r\n\r\n " + error_1.toString());
+                            this.res.write("Proxy Warning:\r\n\r\n " + error_3.toString());
                             this.res.end();
                         }
-                        logger_1.logError(error_1);
-                        return [3 /*break*/, 6];
-                    case 6: return [2 /*return*/];
+                        logger_1.logError(error_3);
+                        return [3 /*break*/, 12];
+                    case 12: return [2 /*return*/];
                 }
             });
         });

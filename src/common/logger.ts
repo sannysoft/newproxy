@@ -29,12 +29,14 @@ export function log(message: string, colorFn?: colorFn): void {
   }
 }
 
-export function logError(message: Error): void {
+export function logError(message: Error | any, comment?: string): void {
+  let fullComment = comment ?? '';
+  if (fullComment !== '') fullComment += '  ';
   if (typeof errorLoggerConfig === 'function') {
-    errorLoggerConfig(message);
+    errorLoggerConfig(message, comment);
   } else if (loggerConfig) {
     if (message instanceof Error) {
-      console.error(message);
+      console.error(fullComment, message);
     } else {
       log(message, chalk.red);
     }

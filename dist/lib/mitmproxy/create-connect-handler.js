@@ -109,8 +109,8 @@ function connect(connectRequest, clientSocket, head, hostname, port) {
         proxySocket.pipe(clientSocket);
         clientSocket.pipe(proxySocket);
     });
-    proxySocket.on('error', function (e) {
-        logger_1.logError(e);
+    proxySocket.on('error', function () {
+        // logError(e);
     });
     proxySocket.on('ready', function () {
         proxySocket.connectKey = proxySocket.localPort + ":" + proxySocket.remotePort;

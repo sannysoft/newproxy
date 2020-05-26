@@ -97,8 +97,8 @@ function connect(
     clientSocket.pipe(proxySocket);
   });
 
-  proxySocket.on('error', (e: Error) => {
-    logError(e);
+  proxySocket.on('error', () => {
+    // logError(e);
   });
 
   proxySocket.on('ready', () => {

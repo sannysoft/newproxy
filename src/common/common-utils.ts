@@ -130,12 +130,8 @@ export class CommonUtils {
       if (typeof externalProxy === 'string') {
         externalProxyConfig = externalProxy;
       } else if (typeof externalProxy === 'function') {
-        try {
-          const connectKey = `${req.socket.remotePort}:${req.socket.localPort}`;
-          externalProxyConfig = externalProxy(req, ssl, res, connections[connectKey]);
-        } catch (error) {
-          logError(error);
-        }
+        const connectKey = `${req.socket.remotePort}:${req.socket.localPort}`;
+        externalProxyConfig = externalProxy(req, ssl, res, connections[connectKey]);
       }
     }
 

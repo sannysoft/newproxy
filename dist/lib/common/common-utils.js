@@ -106,13 +106,8 @@ var CommonUtils = /** @class */ (function () {
                 externalProxyConfig = externalProxy;
             }
             else if (typeof externalProxy === 'function') {
-                try {
-                    var connectKey = req.socket.remotePort + ":" + req.socket.localPort;
-                    externalProxyConfig = externalProxy(req, ssl, res, connections_1.default[connectKey]);
-                }
-                catch (error) {
-                    logger_1.logError(error);
-                }
+                var connectKey = req.socket.remotePort + ":" + req.socket.localPort;
+                externalProxyConfig = externalProxy(req, ssl, res, connections_1.default[connectKey]);
             }
         }
         if (externalProxyConfig)

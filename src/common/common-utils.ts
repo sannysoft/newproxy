@@ -21,10 +21,6 @@ const httpAgent = new AgentKeepAlive({
 
 let socketId = 0;
 
-let httpsOverHttpAgent: boolean;
-let httpOverHttpsAgent: boolean;
-let httpsOverHttpsAgent: boolean;
-
 export function makeErr(message: string): never {
   throw new Error(message);
 }
@@ -164,25 +160,18 @@ export class CommonUtils {
 
     if (isSsl) {
       if (externalProxyProtocol === 'http:') {
-        if (!httpsOverHttpAgent) {
-          httpsOverHttpAgent = tunnelAgent.httpsOverHttp(tunnelConfig);
-        }
-        return httpsOverHttpAgent;
+        return tunnelAgent.httpsOverHttp(tunnelConfig);
       }
-      if (!httpsOverHttpsAgent) {
-        httpsOverHttpsAgent = tunnelAgent.httpsOverHttps(tunnelConfig);
-      }
-      return httpsOverHttpsAgent;
+      return tunnelAgent.httpsOverHttps(tunnelConfig);
     }
+
     if (externalProxyProtocol === 'http:') {
       // if (!httpOverHttpAgent) {
       //     httpOverHttpAgent = tunnelAgent.httpOverHttp(tunnelConfig);
       // }
       return false;
     }
-    if (!httpOverHttpsAgent) {
-      httpOverHttpsAgent = tunnelAgent.httpOverHttps(tunnelConfig);
-    }
-    return httpOverHttpsAgent;
+
+    return tunnelAgent.httpOverHttps(tunnelConfig);
   }
 }

@@ -1,11 +1,14 @@
 import { Agent, ClientRequest, IncomingMessage, ServerResponse } from 'http';
 import * as http from 'http';
 import * as https from 'https';
+import debug from 'debug';
 import { CommonUtils, makeErr } from '../common/common-utils';
 import { ProxyConfig } from '../types/proxy-config';
 import { ExtendedRequestOptions } from '../types/request-options';
 import { logError } from '../common/logger';
 import connections from '../common/connections';
+
+const logger = debug('newproxy.requestHandler');
 
 export class RequestHandler {
   private readonly req: IncomingMessage;
@@ -16,7 +19,7 @@ export class RequestHandler {
 
   private proxyConfig: ProxyConfig;
 
-  private readonly rOptions: ExtendedRequestOptions;
+  private rOptions: ExtendedRequestOptions;
 
   private proxyReq?: ClientRequest;
 
@@ -32,11 +35,17 @@ export class RequestHandler {
     this.res = res;
     this.ssl = ssl;
     this.proxyConfig = proxyConfig;
-
-    this.rOptions = CommonUtils.getOptionsFromRequest(req, ssl, proxyConfig.externalProxy, res);
+    this.rOptions = CommonUtils.getOptionsFromRequest(
+      this.req,
+      this.ssl,
+      this.proxyConfig.externalProxy,
+      this.res,
+    );
   }
 
   public async go(): Promise<void> {
+    logger(`Request handler called for request (ssl=${this.ssl}) ${this.req.toString()}`);
+
     if (this.res.finished) {
       return;
     }
@@ -71,7 +80,7 @@ export class RequestHandler {
       try {
         await this.interceptResponse();
       } catch (error) {
-        logError(error, 'Problem at response interception');
+        logError(error, 'Problem with response interception');
         if (!this.res.finished) {
           this.res.writeHead(500);
           this.res.write(`Proxy Warning:\r\n\r\n${error.toString()}`);
@@ -86,7 +95,7 @@ export class RequestHandler {
       this.sendHeadersAndPipe();
     } catch (error) {
       if (!this.res.finished) {
-        this.res.writeHead(500);
+        if (!this.res.headersSent) this.res.writeHead(500);
         this.res.write(`Proxy Warning:\r\n\r\n ${error.toString()}`);
         this.res.end();
       }
@@ -96,35 +105,48 @@ export class RequestHandler {
   }
 
   private sendHeadersAndPipe(): void {
-    if (this.res.headersSent) return;
-
     if (!this.proxyRes) makeErr('No proxy res');
-
     const proxyRes = this.proxyRes;
 
-    // prevent duplicate set headers
-    Object.keys(proxyRes.headers).forEach(key => {
-      let headerName = key;
-      const headerValue = proxyRes.headers[headerName];
+    if (this.res.headersSent) {
+      logger('Headers sent already');
+    } else {
+      // prevent duplicate set headers
+      Object.keys(proxyRes.headers).forEach(key => {
+        try {
+          let headerName = key;
+          const headerValue = proxyRes.headers[headerName];
 
-      if (headerValue) {
-        // https://github.com/nodejitsu/node-http-proxy/issues/362
-        if (/^www-authenticate$/i.test(key)) {
-          if (proxyRes.headers[headerName]) {
-            // @ts-ignore
-            proxyRes.headers[headerName] =
-              headerValue && typeof headerValue === 'string' && headerValue.split(',');
+          if (headerValue) {
+            // https://github.com/nodejitsu/node-http-proxy/issues/362
+            if (/^www-authenticate$/i.test(key)) {
+              if (proxyRes.headers[headerName]) {
+                // @ts-ignore
+                proxyRes.headers[headerName] =
+                  headerValue && typeof headerValue === 'string' && headerValue.split(',');
+              }
+              headerName = 'www-authenticate';
+            }
+
+            this.res.setHeader(headerName, headerValue);
           }
-          headerName = 'www-authenticate';
+        } catch (error) {
+          logger(`Error sending header${error}`);
         }
+      });
 
-        this.res.setHeader(headerName, headerValue);
+      if (proxyRes.statusCode) {
+        this.res.writeHead(proxyRes.statusCode);
       }
-    });
+    }
 
-    if (proxyRes.statusCode) this.res.writeHead(proxyRes.statusCode);
-
-    proxyRes.pipe(this.res);
+    if (!this.res.finished)
+      try {
+        logger('Start piping');
+        proxyRes.pipe(this.res);
+      } catch (error) {
+        logger(`Piping error: ${error.message}`);
+      }
   }
 
   private getProxyRequestPromise(): Promise<IncomingMessage> {
@@ -143,6 +165,7 @@ export class RequestHandler {
         this.rOptions.agent.getName
       ) {
         // @ts-ignore
+        logger(`Request started with agent ${this.req.toString}`);
         const socketName = this.rOptions.agent.getName(this.rOptions);
         const bindingSocket = this.rOptions.agent.sockets[socketName];
         if (bindingSocket && bindingSocket.length > 0) {
@@ -161,14 +184,17 @@ export class RequestHandler {
         );
 
         self.proxyReq.on('timeout', () => {
+          logger(`ProxyRequest timeout ${self.req.toString}`);
           reject(new Error(`${self.rOptions.host}:${self.rOptions.port}, request timeout`));
         });
 
         self.proxyReq.on('error', (e: Error) => {
+          logger(`error timeout ${self.req.toString}`);
           reject(e);
         });
 
         self.proxyReq.on('aborted', () => {
+          logger(`ProxyRequest aborted ${self.req.toString}`);
           reject(new Error('proxy server aborted the request'));
           // TODO: Check if it's ok
           // @ts-ignore
@@ -176,6 +202,7 @@ export class RequestHandler {
         });
 
         self.req.on('aborted', () => {
+          logger(`Request aborted ${self.req.toString}`);
           // eslint-disable-next-line no-unused-expressions
           self.proxyReq?.abort();
         });

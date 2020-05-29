@@ -2,6 +2,7 @@ import * as https from 'https';
 import * as forge from 'node-forge';
 import * as tls from 'tls';
 import { AddressInfo } from 'net';
+import debug from 'debug';
 import TlsUtils from './tls-utils';
 import CertAndKeyContainer from './cert-and-key-container';
 import { CaPair } from '../types/ca-pair';
@@ -12,6 +13,8 @@ import { RequestHandlerFn } from '../types/functions/request-handler-fn';
 import { logError } from '../common/logger';
 
 const pki = forge.pki;
+
+const logger = debug('newproxy.fakeServer');
 
 export class FakeServersCenter {
   private queue: ServerObjectPromise[] = [];
@@ -118,14 +121,17 @@ export class FakeServersCenter {
       fakeServer.listen(0, () => {
         const address = fakeServer.address() as AddressInfo;
         serverObj.port = address.port;
+        logger(`Fake server created at port ${address.port}`);
       });
 
       fakeServer.on('request', (req, res) => {
         const ssl = true;
+        logger(`New request received by fake-server: ${res.toString()}`);
         this.requestHandler(req, res, ssl);
       });
 
       fakeServer.on('error', e => {
+        logger(`Error by fake-server: ${e.toString()}`);
         logError(e);
       });
 

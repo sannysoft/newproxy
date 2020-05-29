@@ -2,12 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommonUtils = exports.makeErr = void 0;
 var url = require("url");
-// @ts-ignore
-var tunnelAgent = require("tunnel-agent");
 var AgentKeepAlive = require("agentkeepalive");
 var logger_1 = require("./logger");
 var external_proxy_config_1 = require("../types/external-proxy-config");
 var connections_1 = require("./connections");
+var tunneling_agent_1 = require("./tunneling-agent");
 var httpsAgent = new AgentKeepAlive.HttpsAgent({
     keepAlive: true,
     timeout: 60000,
@@ -17,9 +16,6 @@ var httpAgent = new AgentKeepAlive({
     timeout: 60000,
 });
 var socketId = 0;
-var httpsOverHttpAgent;
-var httpOverHttpsAgent;
-var httpsOverHttpsAgent;
 function makeErr(message) {
     throw new Error(message);
 }
@@ -55,7 +51,7 @@ var CommonUtils = /** @class */ (function () {
             }
         }
         else {
-            agent = CommonUtils.getTunnelAgent(protocol === 'https:', externalProxyHelper);
+            agent = tunneling_agent_1.TunnelingAgent.getTunnelAgent(protocol === 'https:', externalProxyHelper);
         }
         var requestHost = (_c = (_b = req.headers) === null || _b === void 0 ? void 0 : _b.host) !== null && _c !== void 0 ? _c : makeErr('No request hostname set');
         var options = {
@@ -113,46 +109,6 @@ var CommonUtils = /** @class */ (function () {
         if (externalProxyConfig)
             return new external_proxy_config_1.ExternalProxyHelper(externalProxyConfig);
         return undefined;
-    };
-    CommonUtils.getTunnelAgent = function (isSsl, externalProxyHelper) {
-        var _a;
-        var urlObject = externalProxyHelper.getUrlObject();
-        var externalProxyProtocol = urlObject.protocol || 'http:';
-        var port = Number((_a = urlObject === null || urlObject === void 0 ? void 0 : urlObject.port) !== null && _a !== void 0 ? _a : (externalProxyProtocol === 'http:' ? 80 : 443));
-        var hostname = urlObject.hostname || 'localhost';
-        var tunnelConfig = {
-            proxy: {
-                host: hostname,
-                port: port,
-            },
-        };
-        var auth = externalProxyHelper.getLoginAndPassword();
-        if (auth) {
-            // @ts-ignore
-            tunnelConfig.proxy.proxyAuth = auth;
-        }
-        if (isSsl) {
-            if (externalProxyProtocol === 'http:') {
-                if (!httpsOverHttpAgent) {
-                    httpsOverHttpAgent = tunnelAgent.httpsOverHttp(tunnelConfig);
-                }
-                return httpsOverHttpAgent;
-            }
-            if (!httpsOverHttpsAgent) {
-                httpsOverHttpsAgent = tunnelAgent.httpsOverHttps(tunnelConfig);
-            }
-            return httpsOverHttpsAgent;
-        }
-        if (externalProxyProtocol === 'http:') {
-            // if (!httpOverHttpAgent) {
-            //     httpOverHttpAgent = tunnelAgent.httpOverHttp(tunnelConfig);
-            // }
-            return false;
-        }
-        if (!httpOverHttpsAgent) {
-            httpOverHttpsAgent = tunnelAgent.httpOverHttps(tunnelConfig);
-        }
-        return httpOverHttpsAgent;
     };
     return CommonUtils;
 }());

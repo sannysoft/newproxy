@@ -1,9 +1,9 @@
-import * as util from 'util';
 import * as chalk from 'chalk';
+import debug from 'debug';
 import { LoggingFn } from '../types/functions/log-fn';
 import { ErrorLoggingFn } from '../types/functions/error-logging-fn';
 
-const debug = util.debuglog('newproxy');
+const logger = debug('newproxy');
 
 let loggerConfig: boolean | LoggingFn = false;
 let errorLoggerConfig: boolean | ErrorLoggingFn = false;
@@ -25,7 +25,7 @@ export function log(message: string, colorFn?: colorFn): void {
     const formattedMessage = colorFn?.(message) ?? message;
     console.log(formattedMessage);
   } else {
-    debug(message);
+    logger(message);
   }
 }
 

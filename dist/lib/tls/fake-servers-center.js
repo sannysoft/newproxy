@@ -40,10 +40,12 @@ exports.FakeServersCenter = void 0;
 var https = require("https");
 var forge = require("node-forge");
 var tls = require("tls");
+var debug_1 = require("debug");
 var tls_utils_1 = require("./tls-utils");
 var cert_and_key_container_1 = require("./cert-and-key-container");
 var logger_1 = require("../common/logger");
 var pki = forge.pki;
+var logger = debug_1.default('newproxy.fakeServer');
 var FakeServersCenter = /** @class */ (function () {
     function FakeServersCenter(maxLength, requestHandler, upgradeHandler, caPair, getCertSocketTimeout) {
         if (maxLength === void 0) { maxLength = 100; }
@@ -135,12 +137,15 @@ var FakeServersCenter = /** @class */ (function () {
                                 fakeServer.listen(0, function () {
                                     var address = fakeServer.address();
                                     serverObj.port = address.port;
+                                    logger("Fake server created at port " + address.port);
                                 });
                                 fakeServer.on('request', function (req, res) {
                                     var ssl = true;
+                                    logger("New request received by fake-server: " + res.toString());
                                     _this.requestHandler(req, res, ssl);
                                 });
                                 fakeServer.on('error', function (e) {
+                                    logger("Error by fake-server: " + e.toString());
                                     logger_1.logError(e);
                                 });
                                 fakeServer.on('listening', function () {

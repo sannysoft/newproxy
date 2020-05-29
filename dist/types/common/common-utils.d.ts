@@ -7,5 +7,4 @@ export declare function makeErr(message: string): never;
 export declare class CommonUtils {
     static getOptionsFromRequest(req: http.IncomingMessage, ssl: boolean, externalProxy: ExternalProxyConfig | ExternalProxyFn | undefined, res?: http.ServerResponse | undefined): ExtendedRequestOptions;
     private static getExternalProxyHelper;
-    private static getTunnelAgent;
 }

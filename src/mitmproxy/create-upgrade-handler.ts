@@ -7,8 +7,8 @@ import { ProxyConfig } from '../types/proxy-config';
 
 // create connectHandler function
 export function createUpgradeHandler(proxyConfig: ProxyConfig): UpgradeHandlerFn {
-  return function upgradeHandler(req, clientSocket, head, ssl) {
-    const clientOptions = CommonUtils.getOptionsFromRequest(
+  return async function upgradeHandler(req, clientSocket, head, ssl) {
+    const clientOptions = await CommonUtils.getOptionsFromRequest(
       req,
       ssl,
       proxyConfig.externalProxy,

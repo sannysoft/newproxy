@@ -40,16 +40,18 @@ exports.RequestHandler = void 0;
 var http_1 = require("http");
 var http = require("http");
 var https = require("https");
+var debug_1 = require("debug");
 var common_utils_1 = require("../common/common-utils");
 var logger_1 = require("../common/logger");
 var connections_1 = require("../common/connections");
+var logger = debug_1.default('newproxy.requestHandler');
 var RequestHandler = /** @class */ (function () {
     function RequestHandler(req, res, ssl, proxyConfig) {
         this.req = req;
         this.res = res;
         this.ssl = ssl;
         this.proxyConfig = proxyConfig;
-        this.rOptions = common_utils_1.CommonUtils.getOptionsFromRequest(req, ssl, proxyConfig.externalProxy, res);
+        this.rOptions = common_utils_1.CommonUtils.getOptionsFromRequest(this.req, this.ssl, this.proxyConfig.externalProxy, this.res);
     }
     RequestHandler.prototype.go = function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -57,6 +59,7 @@ var RequestHandler = /** @class */ (function () {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
+                        logger("Request handler called for request (ssl=" + this.ssl + ") " + this.req.toString());
                         if (this.res.finished) {
                             return [2 /*return*/];
                         }
@@ -103,7 +106,7 @@ var RequestHandler = /** @class */ (function () {
                         return [3 /*break*/, 10];
                     case 9:
                         error_2 = _b.sent();
-                        logger_1.logError(error_2, 'Problem at response interception');
+                        logger_1.logError(error_2, 'Problem with response interception');
                         if (!this.res.finished) {
                             this.res.writeHead(500);
                             this.res.write("Proxy Warning:\r\n\r\n" + error_2.toString());
@@ -119,7 +122,8 @@ var RequestHandler = /** @class */ (function () {
                     case 11:
                         error_3 = _b.sent();
                         if (!this.res.finished) {
-                            this.res.writeHead(500);
+                            if (!this.res.headersSent)
+                                this.res.writeHead(500);
                             this.res.write("Proxy Warning:\r\n\r\n " + error_3.toString());
                             this.res.end();
                         }
@@ -132,31 +136,47 @@ var RequestHandler = /** @class */ (function () {
     };
     RequestHandler.prototype.sendHeadersAndPipe = function () {
         var _this = this;
-        if (this.res.headersSent)
-            return;
         if (!this.proxyRes)
             common_utils_1.makeErr('No proxy res');
         var proxyRes = this.proxyRes;
-        // prevent duplicate set headers
-        Object.keys(proxyRes.headers).forEach(function (key) {
-            var headerName = key;
-            var headerValue = proxyRes.headers[headerName];
-            if (headerValue) {
-                // https://github.com/nodejitsu/node-http-proxy/issues/362
-                if (/^www-authenticate$/i.test(key)) {
-                    if (proxyRes.headers[headerName]) {
-                        // @ts-ignore
-                        proxyRes.headers[headerName] =
-                            headerValue && typeof headerValue === 'string' && headerValue.split(',');
+        if (this.res.headersSent) {
+            logger('Headers sent already');
+        }
+        else {
+            // prevent duplicate set headers
+            Object.keys(proxyRes.headers).forEach(function (key) {
+                try {
+                    var headerName = key;
+                    var headerValue = proxyRes.headers[headerName];
+                    if (headerValue) {
+                        // https://github.com/nodejitsu/node-http-proxy/issues/362
+                        if (/^www-authenticate$/i.test(key)) {
+                            if (proxyRes.headers[headerName]) {
+                                // @ts-ignore
+                                proxyRes.headers[headerName] =
+                                    headerValue && typeof headerValue === 'string' && headerValue.split(',');
+                            }
+                            headerName = 'www-authenticate';
+                        }
+                        _this.res.setHeader(headerName, headerValue);
                     }
-                    headerName = 'www-authenticate';
                 }
-                _this.res.setHeader(headerName, headerValue);
+                catch (error) {
+                    logger("Error sending header" + error);
+                }
+            });
+            if (proxyRes.statusCode) {
+                this.res.writeHead(proxyRes.statusCode);
             }
-        });
-        if (proxyRes.statusCode)
-            this.res.writeHead(proxyRes.statusCode);
-        proxyRes.pipe(this.res);
+        }
+        if (!this.res.finished)
+            try {
+                logger('Start piping');
+                proxyRes.pipe(this.res);
+            }
+            catch (error) {
+                logger("Piping error: " + error.message);
+            }
     };
     RequestHandler.prototype.getProxyRequestPromise = function () {
         var _this = this;
@@ -170,6 +190,7 @@ var RequestHandler = /** @class */ (function () {
                 // @ts-ignore
                 _this.rOptions.agent.getName) {
                 // @ts-ignore
+                logger("Request started with agent " + _this.req.toString);
                 var socketName = _this.rOptions.agent.getName(_this.rOptions);
                 var bindingSocket = _this.rOptions.agent.sockets[socketName];
                 if (bindingSocket && bindingSocket.length > 0) {
@@ -183,12 +204,15 @@ var RequestHandler = /** @class */ (function () {
                     resolve(proxyRes);
                 });
                 self.proxyReq.on('timeout', function () {
+                    logger("ProxyRequest timeout " + self.req.toString);
                     reject(new Error(self.rOptions.host + ":" + self.rOptions.port + ", request timeout"));
                 });
                 self.proxyReq.on('error', function (e) {
+                    logger("error timeout " + self.req.toString);
                     reject(e);
                 });
                 self.proxyReq.on('aborted', function () {
+                    logger("ProxyRequest aborted " + self.req.toString);
                     reject(new Error('proxy server aborted the request'));
                     // TODO: Check if it's ok
                     // @ts-ignore
@@ -196,6 +220,7 @@ var RequestHandler = /** @class */ (function () {
                 });
                 self.req.on('aborted', function () {
                     var _a;
+                    logger("Request aborted " + self.req.toString);
                     // eslint-disable-next-line no-unused-expressions
                     (_a = self.proxyReq) === null || _a === void 0 ? void 0 : _a.abort();
                 });

@@ -6,7 +6,7 @@ export declare class RequestHandler {
     private readonly res;
     private readonly ssl;
     private proxyConfig;
-    private readonly rOptions;
+    private rOptions;
     private proxyReq?;
     private proxyRes?;
     constructor(req: IncomingMessage, res: ServerResponse, ssl: boolean, proxyConfig: ProxyConfig);

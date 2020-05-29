@@ -1,6 +1,4 @@
 import * as url from 'url';
-// @ts-ignore
-import * as tunnelAgent from 'tunnel-agent';
 import * as http from 'http';
 import * as AgentKeepAlive from 'agentkeepalive';
 import { ExternalProxyFn } from '../types/functions/external-proxy-fn';
@@ -8,6 +6,7 @@ import { ExtendedRequestOptions } from '../types/request-options';
 import { logError } from './logger';
 import { ExternalProxyConfig, ExternalProxyHelper } from '../types/external-proxy-config';
 import connections from './connections';
+import { TunnelingAgent } from './tunneling-agent';
 
 const httpsAgent = new AgentKeepAlive.HttpsAgent({
   keepAlive: true,
@@ -58,7 +57,7 @@ export class CommonUtils {
         headers.connection = 'keep-alive';
       }
     } else {
-      agent = CommonUtils.getTunnelAgent(protocol === 'https:', externalProxyHelper);
+      agent = TunnelingAgent.getTunnelAgent(protocol === 'https:', externalProxyHelper);
     }
 
     const requestHost: string = req.headers?.host ?? makeErr('No request hostname set');
@@ -134,44 +133,5 @@ export class CommonUtils {
     if (externalProxyConfig) return new ExternalProxyHelper(externalProxyConfig);
 
     return undefined;
-  }
-
-  private static getTunnelAgent(isSsl: boolean, externalProxyHelper: ExternalProxyHelper): any {
-    const urlObject = externalProxyHelper.getUrlObject();
-    const externalProxyProtocol = urlObject.protocol || 'http:';
-    const port: number | null = Number(
-      urlObject?.port ?? (externalProxyProtocol === 'http:' ? 80 : 443),
-    );
-
-    const hostname = urlObject.hostname || 'localhost';
-
-    const tunnelConfig = {
-      proxy: {
-        host: hostname,
-        port: port,
-      },
-    };
-
-    const auth = externalProxyHelper.getLoginAndPassword();
-    if (auth) {
-      // @ts-ignore
-      tunnelConfig.proxy.proxyAuth = auth;
-    }
-
-    if (isSsl) {
-      if (externalProxyProtocol === 'http:') {
-        return tunnelAgent.httpsOverHttp(tunnelConfig);
-      }
-      return tunnelAgent.httpsOverHttps(tunnelConfig);
-    }
-
-    if (externalProxyProtocol === 'http:') {
-      // if (!httpOverHttpAgent) {
-      //     httpOverHttpAgent = tunnelAgent.httpOverHttp(tunnelConfig);
-      // }
-      return false;
-    }
-
-    return tunnelAgent.httpOverHttps(tunnelConfig);
   }
 }

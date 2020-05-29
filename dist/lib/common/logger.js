@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.logError = exports.log = exports.setErrorLoggerConfig = exports.setLoggerConfig = void 0;
-var util = require("util");
 var chalk = require("chalk");
-var debug = util.debuglog('newproxy');
+var debug_1 = require("debug");
+var logger = debug_1.default('newproxy');
 var loggerConfig = false;
 var errorLoggerConfig = false;
 function setLoggerConfig(value) {
@@ -24,7 +24,7 @@ function log(message, colorFn) {
         console.log(formattedMessage);
     }
     else {
-        debug(message);
+        logger(message);
     }
 }
 exports.log = log;
@@ -44,7 +44,7 @@ function logError(message, comment) {
         }
     }
     else {
-        debug("Error: " + message);
+        debug_1.default("Error: " + message);
     }
 }
 exports.logError = logError;

@@ -40,7 +40,7 @@ export class CommonUtils {
     const protocol = ssl ? 'https:' : 'http:';
     const headers = Object.assign({}, req.headers);
 
-    let externalProxyHelper = null;
+    let externalProxyHelper: ExternalProxyHelper | undefined;
     try {
       externalProxyHelper = this.getExternalProxyHelper(externalProxy, req, ssl, res);
     } catch (error) {
@@ -48,6 +48,7 @@ export class CommonUtils {
     }
 
     delete headers['proxy-connection'];
+    delete headers['proxy-authorization'];
 
     let agent: any = false;
     if (!externalProxyHelper) {
@@ -64,7 +65,7 @@ export class CommonUtils {
       agent = TunnelingAgent.getTunnelAgent(protocol === 'https:', externalProxyHelper);
     }
 
-    const requestHost: string = req.headers?.host ?? makeErr('No request hostname set');
+    const requestHost: string = headers?.host ?? makeErr('No request hostname set');
 
     const options: ExtendedRequestOptions = {
       protocol: protocol,
@@ -72,7 +73,7 @@ export class CommonUtils {
       method: req.method ?? makeErr('No request method set'),
       port: Number(requestHost.split(':')[1] || defaultPort),
       path: urlObject.path ?? makeErr('No request path set'),
-      headers: req.headers,
+      headers: headers,
       agent: agent,
       url: `${protocol}//${requestHost}${urlObject.path ?? ''}`,
     };
@@ -93,6 +94,13 @@ export class CommonUtils {
 
         options.hostname = host;
         options.port = port;
+
+        // Check if we have authorization here
+        const basicAuthString = externalProxyHelper.getBasicAuth();
+        if (basicAuthString) {
+          if (!options.headers) options.headers = {};
+          options.headers['Proxy-Authorization'] = `Basic ${basicAuthString}`;
+        }
 
         // support non-transparent proxy
         options.path = `http://${urlObject.host}${urlObject.path}`;

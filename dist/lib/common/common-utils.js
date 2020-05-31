@@ -24,12 +24,12 @@ var CommonUtils = /** @class */ (function () {
     function CommonUtils() {
     }
     CommonUtils.getOptionsFromRequest = function (req, ssl, externalProxy, res) {
-        var _a, _b, _c, _d, _e, _f, _g, _h;
+        var _a, _b, _c, _d, _e, _f, _g;
         var urlObject = url.parse((_a = req === null || req === void 0 ? void 0 : req.url) !== null && _a !== void 0 ? _a : makeErr('No URL set for the request'));
         var defaultPort = ssl ? 443 : 80;
         var protocol = ssl ? 'https:' : 'http:';
         var headers = Object.assign({}, req.headers);
-        var externalProxyHelper = null;
+        var externalProxyHelper;
         try {
             externalProxyHelper = this.getExternalProxyHelper(externalProxy, req, ssl, res);
         }
@@ -37,6 +37,7 @@ var CommonUtils = /** @class */ (function () {
             logger_1.logError(error, 'Wrong external proxy set');
         }
         delete headers['proxy-connection'];
+        delete headers['proxy-authorization'];
         var agent = false;
         if (!externalProxyHelper) {
             // keepAlive
@@ -53,26 +54,33 @@ var CommonUtils = /** @class */ (function () {
         else {
             agent = tunneling_agent_1.TunnelingAgent.getTunnelAgent(protocol === 'https:', externalProxyHelper);
         }
-        var requestHost = (_c = (_b = req.headers) === null || _b === void 0 ? void 0 : _b.host) !== null && _c !== void 0 ? _c : makeErr('No request hostname set');
+        var requestHost = (_b = headers === null || headers === void 0 ? void 0 : headers.host) !== null && _b !== void 0 ? _b : makeErr('No request hostname set');
         var options = {
             protocol: protocol,
             hostname: requestHost.split(':')[0],
-            method: (_d = req.method) !== null && _d !== void 0 ? _d : makeErr('No request method set'),
+            method: (_c = req.method) !== null && _c !== void 0 ? _c : makeErr('No request method set'),
             port: Number(requestHost.split(':')[1] || defaultPort),
-            path: (_e = urlObject.path) !== null && _e !== void 0 ? _e : makeErr('No request path set'),
-            headers: req.headers,
+            path: (_d = urlObject.path) !== null && _d !== void 0 ? _d : makeErr('No request path set'),
+            headers: headers,
             agent: agent,
-            url: protocol + "//" + requestHost + ((_f = urlObject.path) !== null && _f !== void 0 ? _f : ''),
+            url: protocol + "//" + requestHost + ((_e = urlObject.path) !== null && _e !== void 0 ? _e : ''),
         };
         try {
             if (protocol === 'http:' &&
                 externalProxyHelper &&
                 externalProxyHelper.getProtocol() === 'http:') {
                 var externalURL = externalProxyHelper.getUrlObject();
-                var host = (_g = externalURL.hostname) !== null && _g !== void 0 ? _g : makeErr("No external proxy hostname set - " + externalProxy);
-                var port = Number((_h = externalURL.port) !== null && _h !== void 0 ? _h : makeErr("No external proxy port set - " + externalProxy));
+                var host = (_f = externalURL.hostname) !== null && _f !== void 0 ? _f : makeErr("No external proxy hostname set - " + externalProxy);
+                var port = Number((_g = externalURL.port) !== null && _g !== void 0 ? _g : makeErr("No external proxy port set - " + externalProxy));
                 options.hostname = host;
                 options.port = port;
+                // Check if we have authorization here
+                var basicAuthString = externalProxyHelper.getBasicAuth();
+                if (basicAuthString) {
+                    if (!options.headers)
+                        options.headers = {};
+                    options.headers['Proxy-Authorization'] = "Basic " + basicAuthString;
+                }
                 // support non-transparent proxy
                 options.path = "http://" + urlObject.host + urlObject.path;
             }

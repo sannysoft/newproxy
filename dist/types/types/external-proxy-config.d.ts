@@ -14,4 +14,5 @@ export declare class ExternalProxyHelper {
     getUrlObject(): url.UrlWithStringQuery;
     getProtocol(): string;
     getLoginAndPassword(): string | undefined;
+    getBasicAuth(): string | undefined;
 }

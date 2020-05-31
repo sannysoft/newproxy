@@ -41,6 +41,15 @@ export class ExternalProxyHelper {
   public getLoginAndPassword(): string | undefined {
     if (typeof this.config === 'string') return this.getUrlObject().auth;
 
+    if (!this.config.login || !this.config.password) return undefined;
+
     return `${this.config.login}:${this.config.password}`;
+  }
+
+  public getBasicAuth(): string | undefined {
+    const authString = this.getLoginAndPassword();
+    if (!authString) return undefined;
+
+    return Buffer.from(authString).toString('base64');
   }
 }

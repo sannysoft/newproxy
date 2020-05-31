@@ -28,7 +28,15 @@ var ExternalProxyHelper = /** @class */ (function () {
     ExternalProxyHelper.prototype.getLoginAndPassword = function () {
         if (typeof this.config === 'string')
             return this.getUrlObject().auth;
+        if (!this.config.login || !this.config.password)
+            return undefined;
         return this.config.login + ":" + this.config.password;
+    };
+    ExternalProxyHelper.prototype.getBasicAuth = function () {
+        var authString = this.getLoginAndPassword();
+        if (!authString)
+            return undefined;
+        return Buffer.from(authString).toString('base64');
     };
     return ExternalProxyHelper;
 }());

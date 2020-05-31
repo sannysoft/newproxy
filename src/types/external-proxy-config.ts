@@ -9,6 +9,10 @@ export interface ExternalProxyConfigObject {
   password?: string;
 }
 
+export function isExternalProxyConfigObject(obj: any): obj is ExternalProxyConfigObject {
+  return typeof obj === 'object' && obj.url;
+}
+
 export class ExternalProxyHelper {
   private readonly config: ExternalProxyConfig;
 

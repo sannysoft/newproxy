@@ -1,7 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ExternalProxyHelper = void 0;
+exports.ExternalProxyHelper = exports.isExternalProxyConfigObject = void 0;
 var url = require("url");
+function isExternalProxyConfigObject(obj) {
+    return typeof obj === 'object' && obj.url;
+}
+exports.isExternalProxyConfigObject = isExternalProxyConfigObject;
 var ExternalProxyHelper = /** @class */ (function () {
     function ExternalProxyHelper(config) {
         this.config = config;

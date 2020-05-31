@@ -7,6 +7,7 @@ export interface ExternalProxyConfigObject {
     login?: string;
     password?: string;
 }
+export declare function isExternalProxyConfigObject(obj: any): obj is ExternalProxyConfigObject;
 export declare class ExternalProxyHelper {
     private readonly config;
     constructor(config: ExternalProxyConfig);

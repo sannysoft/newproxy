@@ -3,8 +3,8 @@ import * as url from 'url';
 export declare type ExternalProxyConfig = ExternalProxyConfigObject | string;
 export declare type ExternalProxyConfigOrNull = ExternalProxyConfig | undefined;
 export interface ExternalProxyConfigObject {
-    url: string;
-    login?: string;
+    host: string;
+    username?: string;
     password?: string;
 }
 export declare function isExternalProxyConfigObject(obj: any): obj is ExternalProxyConfigObject;

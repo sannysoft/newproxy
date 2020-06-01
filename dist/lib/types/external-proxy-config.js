@@ -17,7 +17,7 @@ var ExternalProxyHelper = /** @class */ (function () {
             proxy = this.config;
         }
         else {
-            proxy = this.config.url;
+            proxy = this.config.host;
         }
         if (!proxy.startsWith('http:') && !proxy.startsWith('https:'))
             proxy = "http://" + proxy;
@@ -29,9 +29,9 @@ var ExternalProxyHelper = /** @class */ (function () {
     ExternalProxyHelper.prototype.getLoginAndPassword = function () {
         if (typeof this.config === 'string')
             return this.getUrlObject().auth;
-        if (util_fns_1.isNullOrUndefined(this.config.login) || util_fns_1.isNullOrUndefined(this.config.password))
+        if (util_fns_1.isNullOrUndefined(this.config.username) || util_fns_1.isNullOrUndefined(this.config.password))
             return undefined;
-        return this.config.login + ":" + this.config.password;
+        return this.config.username + ":" + this.config.password;
     };
     ExternalProxyHelper.prototype.getBasicAuth = function () {
         var authString = this.getLoginAndPassword();

@@ -9,8 +9,8 @@ const proxy = new NewProxy()
     return true;
   })
   .externalProxyNoMitm({
-    url: 'http://127.0.0.1:8888',
-    login: 'test',
+    host: 'http://127.0.0.1:8888',
+    username: 'test',
     password: '12345',
   })
   .externalProxy((clientReq, ssl, clientRes, connectReq) => {
@@ -23,8 +23,8 @@ const proxy = new NewProxy()
 
     if (host?.includes('yahoo.com'))
       return {
-        url: 'http://127.0.0.1:8888',
-        login: 'username',
+        host: 'http://127.0.0.1:8888',
+        username: 'username',
         password: 'password',
       };
 

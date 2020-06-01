@@ -21,8 +21,8 @@ describe('Proxy test', () => {
       .sslMitm(() => false)
       .externalProxyNoMitm(() => {
         return {
-          url: 'http://127.0.0.1:8888',
-          login: 'sanny',
+          host: 'http://127.0.0.1:8888',
+          username: 'sanny',
           password: '123',
         };
       });

@@ -5,8 +5,8 @@ export type ExternalProxyConfig = ExternalProxyConfigObject | string;
 export type ExternalProxyConfigOrNull = ExternalProxyConfig | undefined;
 
 export interface ExternalProxyConfigObject {
-  url: string;
-  login?: string;
+  host: string;
+  username?: string;
   password?: string;
 }
 
@@ -27,7 +27,7 @@ export class ExternalProxyHelper {
     if (typeof this.config === 'string') {
       proxy = this.config;
     } else {
-      proxy = this.config.url;
+      proxy = this.config.host;
     }
 
     if (!proxy.startsWith('http:') && !proxy.startsWith('https:')) proxy = `http://${proxy}`;
@@ -42,10 +42,10 @@ export class ExternalProxyHelper {
   public getLoginAndPassword(): string | undefined {
     if (typeof this.config === 'string') return this.getUrlObject().auth;
 
-    if (isNullOrUndefined(this.config.login) || isNullOrUndefined(this.config.password))
+    if (isNullOrUndefined(this.config.username) || isNullOrUndefined(this.config.password))
       return undefined;
 
-    return `${this.config.login}:${this.config.password}`;
+    return `${this.config.username}:${this.config.password}`;
   }
 
   public getBasicAuth(): string | undefined {

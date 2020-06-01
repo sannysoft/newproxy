@@ -75,6 +75,7 @@ export class CommonUtils {
       path: urlObject.path ?? makeErr('No request path set'),
       headers: headers,
       agent: agent,
+      timeout: 60000,
       url: `${protocol}//${requestHost}${urlObject.path ?? ''}`,
     };
 

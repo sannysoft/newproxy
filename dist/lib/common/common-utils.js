@@ -63,6 +63,7 @@ var CommonUtils = /** @class */ (function () {
             path: (_d = urlObject.path) !== null && _d !== void 0 ? _d : makeErr('No request path set'),
             headers: headers,
             agent: agent,
+            timeout: 60000,
             url: protocol + "//" + requestHost + ((_e = urlObject.path) !== null && _e !== void 0 ? _e : ''),
         };
         try {

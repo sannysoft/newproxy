@@ -9,9 +9,10 @@ const proxy = new NewProxy()
   })
   .sslMitm(() => true)
   .requestInterceptor((rOptions, clientReq, clientRes, ssl, next) => {
-    clientReq.setTimeout(10000); // Set request timeout to 10 seconds
+    clientReq.setTimeout(30000); // Set request timeout to 10 seconds
 
-    console.log(`URL requested：${rOptions.protocol}//${rOptions.hostname}:${rOptions.port}`);
+    const url = rOptions.url || `${rOptions.protocol}//${rOptions.hostname}:${rOptions.port}`;
+    console.log(`URL requested：${url}`);
     console.log('Cookie:', rOptions.headers.cookie);
 
     if (rOptions.url.includes('test')) {

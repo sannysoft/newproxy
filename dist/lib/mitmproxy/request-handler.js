@@ -203,17 +203,23 @@ var RequestHandler = /** @class */ (function () {
                 self.proxyReq = (self.rOptions.protocol === 'https:' ? https : http).request(self.rOptions, function (proxyRes) {
                     resolve(proxyRes);
                 });
+                var timeout = self.rOptions.timeout || 60000;
+                self.proxyReq.on('socket', function (socket) {
+                    socket.setTimeout(timeout, function () { });
+                });
+                self.proxyReq.setSocketKeepAlive(true, 5000);
+                self.proxyReq.setTimeout(timeout, function () { });
                 self.proxyReq.on('timeout', function () {
-                    logger("ProxyRequest timeout " + self.req.toString);
+                    logger("ProxyRequest timeout for " + self.req.toString());
                     reject(new Error(self.rOptions.host + ":" + self.rOptions.port + ", request timeout"));
                 });
                 self.proxyReq.on('error', function (e) {
-                    logger("error timeout " + self.req.toString);
+                    logger("ProxyRequest error: " + e.message);
                     reject(e);
                 });
                 self.proxyReq.on('aborted', function () {
-                    logger("ProxyRequest aborted " + self.req.toString);
-                    reject(new Error('proxy server aborted the request'));
+                    logger("ProxyRequest aborted for " + self.req.toString());
+                    reject(new Error('Proxy server aborted the request'));
                     // TODO: Check if it's ok
                     // @ts-ignore
                     self.req.abort();

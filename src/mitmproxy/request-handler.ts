@@ -2,6 +2,7 @@ import { Agent, ClientRequest, IncomingMessage, ServerResponse } from 'http';
 import * as http from 'http';
 import * as https from 'https';
 import debug from 'debug';
+import * as net from 'net';
 import { CommonUtils, makeErr } from '../common/common-utils';
 import { ProxyConfig } from '../types/proxy-config';
 import { ExtendedRequestOptions } from '../types/request-options';
@@ -183,19 +184,28 @@ export class RequestHandler {
           },
         );
 
+        const timeout = self.rOptions.timeout || 60000;
+
+        self.proxyReq.on('socket', (socket: net.Socket) => {
+          socket.setTimeout(timeout, () => {});
+        });
+
+        self.proxyReq.setSocketKeepAlive(true, 5000);
+        self.proxyReq.setTimeout(timeout, () => {});
+
         self.proxyReq.on('timeout', () => {
-          logger(`ProxyRequest timeout ${self.req.toString}`);
+          logger(`ProxyRequest timeout for ${self.req.toString()}`);
           reject(new Error(`${self.rOptions.host}:${self.rOptions.port}, request timeout`));
         });
 
         self.proxyReq.on('error', (e: Error) => {
-          logger(`error timeout ${self.req.toString}`);
+          logger(`ProxyRequest error: ${e.message}`);
           reject(e);
         });
 
         self.proxyReq.on('aborted', () => {
-          logger(`ProxyRequest aborted ${self.req.toString}`);
-          reject(new Error('proxy server aborted the request'));
+          logger(`ProxyRequest aborted for ${self.req.toString()}`);
+          reject(new Error('Proxy server aborted the request'));
           // TODO: Check if it's ok
           // @ts-ignore
           self.req.abort();

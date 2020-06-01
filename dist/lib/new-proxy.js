@@ -9,7 +9,7 @@ var create_connect_handler_1 = require("./mitmproxy/create-connect-handler");
 var create_request_handler_1 = require("./mitmproxy/create-request-handler");
 var ca_config_1 = require("./common/ca-config");
 var logger_1 = require("./common/logger");
-var common_utils_1 = require("./common/common-utils");
+var util_fns_1 = require("./common/util-fns");
 // eslint-disable-next-line import/no-default-export
 var NewProxy = /** @class */ (function () {
     function NewProxy(userProxyConfig) {
@@ -75,8 +75,8 @@ var NewProxy = /** @class */ (function () {
             getCertSocketTimeout: userConfig.getCertSocketTimeout || 10000,
             externalProxy: userConfig.externalProxy || undefined,
             externalProxyNoMitm: userConfig.externalProxyNoMitm || undefined,
-            caCertPath: caCertPath !== null && caCertPath !== void 0 ? caCertPath : common_utils_1.makeErr('No caCertPath'),
-            caKeyPath: caKeyPath !== null && caKeyPath !== void 0 ? caKeyPath : common_utils_1.makeErr('No caKeyPath'),
+            caCertPath: caCertPath !== null && caCertPath !== void 0 ? caCertPath : util_fns_1.makeErr('No caCertPath'),
+            caKeyPath: caKeyPath !== null && caKeyPath !== void 0 ? caKeyPath : util_fns_1.makeErr('No caKeyPath'),
         };
     };
     NewProxy.prototype.setup = function () {

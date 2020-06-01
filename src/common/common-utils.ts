@@ -11,6 +11,7 @@ import {
 } from '../types/external-proxy-config';
 import connections from './connections';
 import { TunnelingAgent } from './tunneling-agent';
+import { makeErr } from './util-fns';
 
 const httpsAgent = new AgentKeepAlive.HttpsAgent({
   keepAlive: true,
@@ -23,10 +24,6 @@ const httpAgent = new AgentKeepAlive({
 });
 
 let socketId = 0;
-
-export function makeErr(message: string): never {
-  throw new Error(message);
-}
 
 export class CommonUtils {
   public static getOptionsFromRequest(

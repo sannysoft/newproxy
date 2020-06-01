@@ -3,11 +3,12 @@ import * as http from 'http';
 import * as https from 'https';
 import debug from 'debug';
 import * as net from 'net';
-import { CommonUtils, makeErr } from '../common/common-utils';
+import { CommonUtils } from '../common/common-utils';
 import { ProxyConfig } from '../types/proxy-config';
 import { ExtendedRequestOptions } from '../types/request-options';
 import { logError } from '../common/logger';
 import connections from '../common/connections';
+import { makeErr } from '../common/util-fns';
 
 const logger = debug('newproxy.requestHandler');
 

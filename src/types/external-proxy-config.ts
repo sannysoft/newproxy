@@ -1,4 +1,5 @@
 import * as url from 'url';
+import { isNullOrUndefined } from '../common/util-fns';
 
 export type ExternalProxyConfig = ExternalProxyConfigObject | string;
 export type ExternalProxyConfigOrNull = ExternalProxyConfig | undefined;
@@ -41,7 +42,8 @@ export class ExternalProxyHelper {
   public getLoginAndPassword(): string | undefined {
     if (typeof this.config === 'string') return this.getUrlObject().auth;
 
-    if (!this.config.login || !this.config.password) return undefined;
+    if (isNullOrUndefined(this.config.login) || isNullOrUndefined(this.config.password))
+      return undefined;
 
     return `${this.config.login}:${this.config.password}`;
   }

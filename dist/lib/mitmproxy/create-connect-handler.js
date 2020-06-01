@@ -40,9 +40,9 @@ exports.createConnectHandler = void 0;
 var url = require("url");
 var net = require("net");
 var connections_1 = require("../common/connections");
-var common_utils_1 = require("../common/common-utils");
 var logger_1 = require("../common/logger");
 var external_proxy_config_1 = require("../types/external-proxy-config");
+var util_fns_1 = require("../common/util-fns");
 var localIP = '127.0.0.1';
 function createConnectHandler(proxyConfig, fakeServerCenter) {
     // return
@@ -62,7 +62,7 @@ function createConnectHandler(proxyConfig, fakeServerCenter) {
         }
         if (!clientSocket.writable)
             return;
-        var serverHostname = (_a = srvUrl.hostname) !== null && _a !== void 0 ? _a : common_utils_1.makeErr('No hostname set for https request');
+        var serverHostname = (_a = srvUrl.hostname) !== null && _a !== void 0 ? _a : util_fns_1.makeErr('No hostname set for https request');
         var serverPort = Number(srvUrl.port || 443);
         if (!interceptSsl) {
             var externalProxy = void 0;

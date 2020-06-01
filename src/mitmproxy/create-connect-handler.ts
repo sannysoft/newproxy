@@ -5,12 +5,12 @@ import stream from 'stream';
 import { FakeServersCenter } from '../tls/fake-servers-center';
 import connections from '../common/connections';
 import { ExtendedNetSocket } from '../types/extended-net-socket';
-import { makeErr } from '../common/common-utils';
 import { ConnectHandlerFn } from '../types/functions/connect-handler-fn';
 import { ServerObject } from '../types/server-object';
 import { logError } from '../common/logger';
 import { ProxyConfig } from '../types/proxy-config';
 import { ExternalProxyHelper, ExternalProxyConfigOrNull } from '../types/external-proxy-config';
+import { makeErr } from '../common/util-fns';
 
 const localIP = '127.0.0.1';
 

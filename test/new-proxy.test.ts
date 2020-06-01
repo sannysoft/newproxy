@@ -1,5 +1,4 @@
 import NewProxy from '../src/new-proxy';
-import { IncomingMessage, ServerResponse } from 'http';
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));

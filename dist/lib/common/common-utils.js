@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CommonUtils = exports.makeErr = void 0;
+exports.CommonUtils = void 0;
 var url = require("url");
 var AgentKeepAlive = require("agentkeepalive");
 var logger_1 = require("./logger");
 var external_proxy_config_1 = require("../types/external-proxy-config");
 var connections_1 = require("./connections");
 var tunneling_agent_1 = require("./tunneling-agent");
+var util_fns_1 = require("./util-fns");
 var httpsAgent = new AgentKeepAlive.HttpsAgent({
     keepAlive: true,
     timeout: 60000,
@@ -16,16 +17,12 @@ var httpAgent = new AgentKeepAlive({
     timeout: 60000,
 });
 var socketId = 0;
-function makeErr(message) {
-    throw new Error(message);
-}
-exports.makeErr = makeErr;
 var CommonUtils = /** @class */ (function () {
     function CommonUtils() {
     }
     CommonUtils.getOptionsFromRequest = function (req, ssl, externalProxy, res) {
         var _a, _b, _c, _d, _e, _f, _g;
-        var urlObject = url.parse((_a = req === null || req === void 0 ? void 0 : req.url) !== null && _a !== void 0 ? _a : makeErr('No URL set for the request'));
+        var urlObject = url.parse((_a = req === null || req === void 0 ? void 0 : req.url) !== null && _a !== void 0 ? _a : util_fns_1.makeErr('No URL set for the request'));
         var defaultPort = ssl ? 443 : 80;
         var protocol = ssl ? 'https:' : 'http:';
         var headers = Object.assign({}, req.headers);
@@ -54,13 +51,13 @@ var CommonUtils = /** @class */ (function () {
         else {
             agent = tunneling_agent_1.TunnelingAgent.getTunnelAgent(protocol === 'https:', externalProxyHelper);
         }
-        var requestHost = (_b = headers === null || headers === void 0 ? void 0 : headers.host) !== null && _b !== void 0 ? _b : makeErr('No request hostname set');
+        var requestHost = (_b = headers === null || headers === void 0 ? void 0 : headers.host) !== null && _b !== void 0 ? _b : util_fns_1.makeErr('No request hostname set');
         var options = {
             protocol: protocol,
             hostname: requestHost.split(':')[0],
-            method: (_c = req.method) !== null && _c !== void 0 ? _c : makeErr('No request method set'),
+            method: (_c = req.method) !== null && _c !== void 0 ? _c : util_fns_1.makeErr('No request method set'),
             port: Number(requestHost.split(':')[1] || defaultPort),
-            path: (_d = urlObject.path) !== null && _d !== void 0 ? _d : makeErr('No request path set'),
+            path: (_d = urlObject.path) !== null && _d !== void 0 ? _d : util_fns_1.makeErr('No request path set'),
             headers: headers,
             agent: agent,
             timeout: 60000,
@@ -71,8 +68,8 @@ var CommonUtils = /** @class */ (function () {
                 externalProxyHelper &&
                 externalProxyHelper.getProtocol() === 'http:') {
                 var externalURL = externalProxyHelper.getUrlObject();
-                var host = (_f = externalURL.hostname) !== null && _f !== void 0 ? _f : makeErr("No external proxy hostname set - " + externalProxy);
-                var port = Number((_g = externalURL.port) !== null && _g !== void 0 ? _g : makeErr("No external proxy port set - " + externalProxy));
+                var host = (_f = externalURL.hostname) !== null && _f !== void 0 ? _f : util_fns_1.makeErr("No external proxy hostname set - " + externalProxy);
+                var port = Number((_g = externalURL.port) !== null && _g !== void 0 ? _g : util_fns_1.makeErr("No external proxy port set - " + externalProxy));
                 options.hostname = host;
                 options.port = port;
                 // Check if we have authorization here

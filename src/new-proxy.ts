@@ -9,7 +9,6 @@ import { createConnectHandler } from './mitmproxy/create-connect-handler';
 import { createRequestHandler } from './mitmproxy/create-request-handler';
 import { caConfig } from './common/ca-config';
 import { log, logError, setErrorLoggerConfig, setLoggerConfig } from './common/logger';
-import { makeErr } from './common/common-utils';
 import { SslMitmFn } from './types/functions/ssl-connect-interceptor';
 import { RequestInterceptorFn } from './types/functions/request-interceptor-fn';
 import { ResponseInterceptorFn } from './types/functions/response-interceptor-fn';
@@ -21,6 +20,7 @@ import { ConnectHandlerFn } from './types/functions/connect-handler-fn';
 import { FakeServersCenter } from './tls/fake-servers-center';
 import { ErrorLoggingFn } from './types/functions/error-logging-fn';
 import { ExternalProxyConfig } from './types/external-proxy-config';
+import { makeErr } from './common/util-fns';
 
 // eslint-disable-next-line import/no-default-export
 export default class NewProxy {

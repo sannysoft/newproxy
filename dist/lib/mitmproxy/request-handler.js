@@ -44,6 +44,7 @@ var debug_1 = require("debug");
 var common_utils_1 = require("../common/common-utils");
 var logger_1 = require("../common/logger");
 var connections_1 = require("../common/connections");
+var util_fns_1 = require("../common/util-fns");
 var logger = debug_1.default('newproxy.requestHandler');
 var RequestHandler = /** @class */ (function () {
     function RequestHandler(req, res, ssl, proxyConfig) {
@@ -137,7 +138,7 @@ var RequestHandler = /** @class */ (function () {
     RequestHandler.prototype.sendHeadersAndPipe = function () {
         var _this = this;
         if (!this.proxyRes)
-            common_utils_1.makeErr('No proxy res');
+            util_fns_1.makeErr('No proxy res');
         var proxyRes = this.proxyRes;
         if (this.res.headersSent) {
             logger('Headers sent already');
@@ -269,7 +270,7 @@ var RequestHandler = /** @class */ (function () {
                         };
                         try {
                             if (typeof _this.proxyConfig.responseInterceptor === 'function') {
-                                _this.proxyConfig.responseInterceptor.call(null, _this.req, _this.res, (_a = _this.proxyReq) !== null && _a !== void 0 ? _a : common_utils_1.makeErr('No proxyReq'), (_b = _this.proxyRes) !== null && _b !== void 0 ? _b : common_utils_1.makeErr('No proxyRes'), _this.ssl, next);
+                                _this.proxyConfig.responseInterceptor.call(null, _this.req, _this.res, (_a = _this.proxyReq) !== null && _a !== void 0 ? _a : util_fns_1.makeErr('No proxyReq'), (_b = _this.proxyRes) !== null && _b !== void 0 ? _b : util_fns_1.makeErr('No proxyRes'), _this.ssl, next);
                             }
                             else {
                                 resolve();

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExternalProxyHelper = exports.isExternalProxyConfigObject = void 0;
 var url = require("url");
+var util_fns_1 = require("../common/util-fns");
 function isExternalProxyConfigObject(obj) {
     return typeof obj === 'object' && obj.url;
 }
@@ -28,7 +29,7 @@ var ExternalProxyHelper = /** @class */ (function () {
     ExternalProxyHelper.prototype.getLoginAndPassword = function () {
         if (typeof this.config === 'string')
             return this.getUrlObject().auth;
-        if (!this.config.login || !this.config.password)
+        if (util_fns_1.isNullOrUndefined(this.config.login) || util_fns_1.isNullOrUndefined(this.config.password))
             return undefined;
         return this.config.login + ":" + this.config.password;
     };

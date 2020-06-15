@@ -45,6 +45,7 @@ var common_utils_1 = require("../common/common-utils");
 var logger_1 = require("../common/logger");
 var connections_1 = require("../common/connections");
 var util_fns_1 = require("../common/util-fns");
+var request_timeout_error_1 = require("../errors/request-timeout-error");
 var logger = debug_1.default('newproxy.requestHandler');
 var RequestHandler = /** @class */ (function () {
     function RequestHandler(req, res, ssl, proxyConfig) {
@@ -56,7 +57,7 @@ var RequestHandler = /** @class */ (function () {
     }
     RequestHandler.prototype.go = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var error_1, proxyRequestPromise, _a, error_2, error_3;
+            var error_1, proxyRequestPromise, _a, error_2, error_3, error_4;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -67,7 +68,7 @@ var RequestHandler = /** @class */ (function () {
                         this.setKeepAlive();
                         _b.label = 1;
                     case 1:
-                        _b.trys.push([1, 11, , 12]);
+                        _b.trys.push([1, 14, , 15]);
                         _b.label = 2;
                     case 2:
                         _b.trys.push([2, 4, , 5]);
@@ -88,49 +89,67 @@ var RequestHandler = /** @class */ (function () {
                         if (this.res.finished) {
                             return [2 /*return*/];
                         }
+                        _b.label = 6;
+                    case 6:
+                        _b.trys.push([6, 8, , 9]);
                         proxyRequestPromise = this.getProxyRequestPromise();
-                        // Wait for proxy to process the full request
                         _a = this;
                         return [4 /*yield*/, proxyRequestPromise];
-                    case 6:
-                        // Wait for proxy to process the full request
+                    case 7:
                         _a.proxyRes = _b.sent();
+                        return [3 /*break*/, 9];
+                    case 8:
+                        error_2 = _b.sent();
+                        logger_1.logError(error_2, 'Problem at request processing');
                         if (this.res.finished) {
                             return [2 /*return*/];
                         }
-                        _b.label = 7;
-                    case 7:
-                        _b.trys.push([7, 9, , 10]);
-                        return [4 /*yield*/, this.interceptResponse()];
-                    case 8:
-                        _b.sent();
-                        return [3 /*break*/, 10];
+                        if (error_2 instanceof request_timeout_error_1.RequestTimeoutError) {
+                            this.res.writeHead(504);
+                        }
+                        else {
+                            this.res.writeHead(502);
+                        }
+                        this.res.write("Proxy Error:\r\n\r\n" + error_2.toString());
+                        this.res.end();
+                        return [3 /*break*/, 9];
                     case 9:
-                        error_2 = _b.sent();
-                        logger_1.logError(error_2, 'Problem with response interception');
+                        if (this.res.finished) {
+                            return [2 /*return*/];
+                        }
+                        _b.label = 10;
+                    case 10:
+                        _b.trys.push([10, 12, , 13]);
+                        return [4 /*yield*/, this.interceptResponse()];
+                    case 11:
+                        _b.sent();
+                        return [3 /*break*/, 13];
+                    case 12:
+                        error_3 = _b.sent();
+                        logger_1.logError(error_3, 'Problem with response interception');
                         if (!this.res.finished) {
                             this.res.writeHead(500);
-                            this.res.write("Proxy Warning:\r\n\r\n" + error_2.toString());
+                            this.res.write("Proxy Warning:\r\n\r\n" + error_3.toString());
                             this.res.end();
                         }
-                        return [3 /*break*/, 10];
-                    case 10:
+                        return [3 /*break*/, 13];
+                    case 13:
                         if (this.res.finished) {
                             return [2 /*return*/];
                         }
                         this.sendHeadersAndPipe();
-                        return [3 /*break*/, 12];
-                    case 11:
-                        error_3 = _b.sent();
+                        return [3 /*break*/, 15];
+                    case 14:
+                        error_4 = _b.sent();
                         if (!this.res.finished) {
                             if (!this.res.headersSent)
                                 this.res.writeHead(500);
-                            this.res.write("Proxy Warning:\r\n\r\n " + error_3.toString());
+                            this.res.write("Proxy Warning:\r\n\r\n " + error_4.toString());
                             this.res.end();
                         }
-                        logger_1.logError(error_3);
-                        return [3 /*break*/, 12];
-                    case 12: return [2 /*return*/];
+                        logger_1.logError(error_4);
+                        return [3 /*break*/, 15];
+                    case 15: return [2 /*return*/];
                 }
             });
         });
@@ -151,7 +170,7 @@ var RequestHandler = /** @class */ (function () {
                     var headerValue = proxyRes.headers[headerName];
                     if (headerValue) {
                         // https://github.com/nodejitsu/node-http-proxy/issues/362
-                        if (/^www-authenticate$/i.test(key)) {
+                        if (/^www-authenticate$/i.test(headerName)) {
                             if (proxyRes.headers[headerName]) {
                                 // @ts-ignore
                                 proxyRes.headers[headerName] =
@@ -212,7 +231,7 @@ var RequestHandler = /** @class */ (function () {
                 self.proxyReq.setTimeout(timeout, function () { });
                 self.proxyReq.on('timeout', function () {
                     logger("ProxyRequest timeout for " + self.req.toString());
-                    reject(new Error(self.rOptions.host + ":" + self.rOptions.port + ", request timeout"));
+                    reject(new request_timeout_error_1.RequestTimeoutError(self.rOptions.host + ":" + self.rOptions.port, timeout));
                 });
                 self.proxyReq.on('error', function (e) {
                     logger("ProxyRequest error: " + e.message);

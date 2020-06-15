@@ -15,7 +15,7 @@ var NewProxy = /** @class */ (function () {
     function NewProxy(userProxyConfig) {
         if (userProxyConfig === void 0) { userProxyConfig = {}; }
         this.proxyConfig = NewProxy.setDefaultsForConfig(userProxyConfig);
-        this.server = new http.Server();
+        this.httpServer = new http.Server();
     }
     NewProxy.prototype.port = function (port) {
         this.proxyConfig.port = port;
@@ -93,29 +93,29 @@ var NewProxy = /** @class */ (function () {
         // Don't reject unauthorized
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
         this.setup();
-        this.server.listen(this.proxyConfig.port, function () {
+        this.httpServer.listen(this.proxyConfig.port, function () {
             logger_1.log("NewProxy is listening on port " + _this.proxyConfig.port, chalk.green);
-            _this.server.on('error', function (e) {
+            _this.httpServer.on('error', function (e) {
                 logger_1.logError(e);
             });
-            _this.server.on('request', function (req, res) {
+            _this.httpServer.on('request', function (req, res) {
                 var ssl = false;
                 _this.requestHandler(req, res, ssl);
             });
             // tunneling for https
-            _this.server.on('connect', function (connectRequest, clientSocket, head) {
+            _this.httpServer.on('connect', function (connectRequest, clientSocket, head) {
                 clientSocket.on('error', function () { });
                 _this.connectHandler(connectRequest, clientSocket, head);
             });
             // TODO: handle WebSocket
-            _this.server.on('upgrade', function (req, socket, head) {
+            _this.httpServer.on('upgrade', function (req, socket, head) {
                 var ssl = false;
                 _this.upgradeHandler(req, socket, head, ssl);
             });
         });
     };
     NewProxy.prototype.stop = function () {
-        this.server.close(function () { });
+        this.httpServer.close(function () { });
     };
     return NewProxy;
 }());

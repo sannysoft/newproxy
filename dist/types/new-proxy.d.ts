@@ -1,3 +1,5 @@
+/// <reference types="node" />
+import * as http from 'http';
 import { ProxyConfig, UserProxyConfig } from './types/proxy-config';
 import { SslMitmFn } from './types/functions/ssl-connect-interceptor';
 import { RequestInterceptorFn } from './types/functions/request-interceptor-fn';
@@ -8,7 +10,7 @@ import { ErrorLoggingFn } from './types/functions/error-logging-fn';
 import { ExternalProxyConfig } from './types/external-proxy-config';
 export default class NewProxy {
     protected proxyConfig: ProxyConfig;
-    private server;
+    httpServer: http.Server;
     private requestHandler?;
     private upgradeHandler?;
     private fakeServersCenter?;

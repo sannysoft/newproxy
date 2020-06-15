@@ -9,6 +9,7 @@ import { ExtendedRequestOptions } from '../types/request-options';
 import { logError } from '../common/logger';
 import connections from '../common/connections';
 import { makeErr } from '../common/util-fns';
+import { RequestTimeoutError } from '../errors/request-timeout-error';
 
 const logger = debug('newproxy.requestHandler');
 
@@ -70,10 +71,24 @@ export class RequestHandler {
         return;
       }
 
-      const proxyRequestPromise = this.getProxyRequestPromise();
+      try {
+        const proxyRequestPromise = this.getProxyRequestPromise();
+        this.proxyRes = await proxyRequestPromise;
+      } catch (error) {
+        logError(error, 'Problem at request processing');
+        if (this.res.finished) {
+          return;
+        }
 
-      // Wait for proxy to process the full request
-      this.proxyRes = await proxyRequestPromise;
+        if (error instanceof RequestTimeoutError) {
+          this.res.writeHead(504);
+        } else {
+          this.res.writeHead(502);
+        }
+
+        this.res.write(`Proxy Error:\r\n\r\n${error.toString()}`);
+        this.res.end();
+      }
 
       if (this.res.finished) {
         return;
@@ -121,7 +136,7 @@ export class RequestHandler {
 
           if (headerValue) {
             // https://github.com/nodejitsu/node-http-proxy/issues/362
-            if (/^www-authenticate$/i.test(key)) {
+            if (/^www-authenticate$/i.test(headerName)) {
               if (proxyRes.headers[headerName]) {
                 // @ts-ignore
                 proxyRes.headers[headerName] =
@@ -196,7 +211,7 @@ export class RequestHandler {
 
         self.proxyReq.on('timeout', () => {
           logger(`ProxyRequest timeout for ${self.req.toString()}`);
-          reject(new Error(`${self.rOptions.host}:${self.rOptions.port}, request timeout`));
+          reject(new RequestTimeoutError(`${self.rOptions.host}:${self.rOptions.port}`, timeout));
         });
 
         self.proxyReq.on('error', (e: Error) => {

@@ -26,7 +26,7 @@ import { makeErr } from './common/util-fns';
 export default class NewProxy {
   protected proxyConfig: ProxyConfig;
 
-  private server: http.Server;
+  public httpServer: http.Server;
 
   private requestHandler?: RequestHandlerFn;
 
@@ -38,7 +38,7 @@ export default class NewProxy {
 
   public constructor(userProxyConfig: UserProxyConfig = {}) {
     this.proxyConfig = NewProxy.setDefaultsForConfig(userProxyConfig);
-    this.server = new http.Server();
+    this.httpServer = new http.Server();
   }
 
   public port(port: number): NewProxy {
@@ -147,20 +147,20 @@ export default class NewProxy {
 
     this.setup();
 
-    this.server.listen(this.proxyConfig.port, () => {
+    this.httpServer.listen(this.proxyConfig.port, () => {
       log(`NewProxy is listening on port ${this.proxyConfig.port}`, chalk.green);
 
-      this.server.on('error', (e: Error) => {
+      this.httpServer.on('error', (e: Error) => {
         logError(e);
       });
 
-      this.server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
+      this.httpServer.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
         const ssl = false;
         this.requestHandler!!(req, res, ssl);
       });
 
       // tunneling for https
-      this.server.on(
+      this.httpServer.on(
         'connect',
         (connectRequest: http.IncomingMessage, clientSocket: stream.Duplex, head: Buffer) => {
           clientSocket.on('error', () => {});
@@ -169,7 +169,7 @@ export default class NewProxy {
       );
 
       // TODO: handle WebSocket
-      this.server.on(
+      this.httpServer.on(
         'upgrade',
         (req: http.IncomingMessage, socket: stream.Duplex, head: Buffer) => {
           const ssl = false;
@@ -180,6 +180,6 @@ export default class NewProxy {
   }
 
   public stop(): void {
-    this.server.close(() => {});
+    this.httpServer.close(() => {});
   }
 }

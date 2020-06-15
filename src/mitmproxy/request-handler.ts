@@ -7,9 +7,10 @@ import { CommonUtils } from '../common/common-utils';
 import { ProxyConfig } from '../types/proxy-config';
 import { ExtendedRequestOptions } from '../types/request-options';
 import { logError } from '../common/logger';
-import connections from '../common/connections';
+import contexts from '../common/contexts';
 import { makeErr } from '../common/util-fns';
 import { RequestTimeoutError } from '../errors/request-timeout-error';
+import { Context } from '../types/contexts/context';
 
 const logger = debug('newproxy.requestHandler');
 
@@ -17,8 +18,6 @@ export class RequestHandler {
   private readonly req: IncomingMessage;
 
   private readonly res: ServerResponse;
-
-  private readonly ssl: boolean;
 
   private proxyConfig: ProxyConfig;
 
@@ -28,26 +27,18 @@ export class RequestHandler {
 
   private proxyRes?: IncomingMessage;
 
-  public constructor(
-    req: IncomingMessage,
-    res: ServerResponse,
-    ssl: boolean,
-    proxyConfig: ProxyConfig,
-  ) {
-    this.req = req;
-    this.res = res;
-    this.ssl = ssl;
+  private context: Context;
+
+  public constructor(context: Context, proxyConfig: ProxyConfig) {
+    this.context = context;
+    this.req = context.clientReq;
+    this.res = context.clientRes ?? makeErr('No clientResponse set in context');
     this.proxyConfig = proxyConfig;
-    this.rOptions = CommonUtils.getOptionsFromRequest(
-      this.req,
-      this.ssl,
-      this.proxyConfig.externalProxy,
-      this.res,
-    );
+    this.rOptions = CommonUtils.getOptionsFromRequest(this.context, this.proxyConfig);
   }
 
   public async go(): Promise<void> {
-    logger(`Request handler called for request (ssl=${this.ssl}) ${this.req.toString()}`);
+    logger(`Request handler called for request (ssl=${this.context.ssl}) ${this.req.toString()}`);
 
     if (this.res.finished) {
       return;
@@ -61,7 +52,8 @@ export class RequestHandler {
       } catch (error) {
         logError(error, 'Problem at request interception');
         if (!this.res.finished) {
-          this.res.writeHead(500);
+          this.context.setStatusCode(502);
+          this.res.writeHead(502);
           this.res.write(`Proxy Warning:\r\n\r\n${error.toString()}`);
           this.res.end();
         }
@@ -74,6 +66,11 @@ export class RequestHandler {
       try {
         const proxyRequestPromise = this.getProxyRequestPromise();
         this.proxyRes = await proxyRequestPromise;
+        this.context.setStatusCode(
+          this.proxyRes?.statusCode,
+          this.proxyRes.socket.bytesWritten,
+          this.proxyRes.socket.bytesRead,
+        );
       } catch (error) {
         logError(error, 'Problem at request processing');
         if (this.res.finished) {
@@ -81,8 +78,10 @@ export class RequestHandler {
         }
 
         if (error instanceof RequestTimeoutError) {
+          this.context.setStatusCode(504);
           this.res.writeHead(504);
         } else {
+          this.context.setStatusCode(502);
           this.res.writeHead(502);
         }
 
@@ -252,8 +251,8 @@ export class RequestHandler {
             this.rOptions,
             this.req,
             this.res,
-            this.ssl,
-            connections[connectKey],
+            this.context.ssl,
+            contexts[connectKey]?.connectRequest,
             next,
           );
         } else {
@@ -278,7 +277,7 @@ export class RequestHandler {
             this.res,
             this.proxyReq ?? makeErr('No proxyReq'),
             this.proxyRes ?? makeErr('No proxyRes'),
-            this.ssl,
+            this.context.ssl,
             next,
           );
         } else {

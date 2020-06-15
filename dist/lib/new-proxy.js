@@ -10,6 +10,8 @@ var create_request_handler_1 = require("./mitmproxy/create-request-handler");
 var ca_config_1 = require("./common/ca-config");
 var logger_1 = require("./common/logger");
 var util_fns_1 = require("./common/util-fns");
+var context_1 = require("./types/contexts/context");
+var context_no_mitm_1 = require("./types/contexts/context-no-mitm");
 // eslint-disable-next-line import/no-default-export
 var NewProxy = /** @class */ (function () {
     function NewProxy(userProxyConfig) {
@@ -35,6 +37,10 @@ var NewProxy = /** @class */ (function () {
     };
     NewProxy.prototype.log = function (value) {
         this.proxyConfig.log = value;
+        return this;
+    };
+    NewProxy.prototype.metrics = function (value) {
+        this.proxyConfig.statusFn = value;
         return this;
     };
     NewProxy.prototype.errorLog = function (value) {
@@ -69,6 +75,8 @@ var NewProxy = /** @class */ (function () {
             port: userConfig.port || 6789,
             log: userConfig.log || true,
             errorLog: userConfig.errorLog || true,
+            statusFn: userConfig.statusFn || undefined,
+            statusNoMitmFn: userConfig.statusNoMitmFn || undefined,
             sslMitm: userConfig.sslMitm || undefined,
             requestInterceptor: userConfig.requestInterceptor || undefined,
             responseInterceptor: userConfig.responseInterceptor || undefined,
@@ -99,13 +107,15 @@ var NewProxy = /** @class */ (function () {
                 logger_1.logError(e);
             });
             _this.httpServer.on('request', function (req, res) {
-                var ssl = false;
-                _this.requestHandler(req, res, ssl);
+                // Plain HTTP request
+                var context = new context_1.Context(req, res, false);
+                _this.requestHandler(context);
             });
             // tunneling for https
             _this.httpServer.on('connect', function (connectRequest, clientSocket, head) {
                 clientSocket.on('error', function () { });
-                _this.connectHandler(connectRequest, clientSocket, head);
+                var context = new context_no_mitm_1.ContextNoMitm(connectRequest, clientSocket, head);
+                _this.connectHandler(context);
             });
             // TODO: handle WebSocket
             _this.httpServer.on('upgrade', function (req, socket, head) {

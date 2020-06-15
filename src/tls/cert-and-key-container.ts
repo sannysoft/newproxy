@@ -85,8 +85,7 @@ export default class CertAndKeyContainer {
 
             if (!certObj) certObj = TlsUtils.createFakeCertificateByDomain(this.caPair, hostname);
 
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            newResolve(certObj!!);
+            newResolve(certObj);
           } catch (error) {
             reject(error);
           }
@@ -96,16 +95,14 @@ export default class CertAndKeyContainer {
       preReq.setTimeout(this.getCertSocketTimeout, () => {
         if (!certObj) {
           certObj = TlsUtils.createFakeCertificateByDomain(this.caPair, hostname);
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          newResolve(certObj!!);
+          newResolve(certObj);
         }
       });
 
       preReq.on('error', () => {
         if (!certObj) {
           certObj = TlsUtils.createFakeCertificateByDomain(this.caPair, hostname);
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          newResolve(certObj!!);
+          newResolve(certObj);
         }
       });
 

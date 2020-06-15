@@ -4,16 +4,14 @@ import { UpgradeHandlerFn } from '../types/functions/upgrade-handler-fn';
 import { CommonUtils } from '../common/common-utils';
 import { logError } from '../common/logger';
 import { ProxyConfig } from '../types/proxy-config';
+import { Context } from '../types/contexts/context';
 
 // create connectHandler function
 export function createUpgradeHandler(proxyConfig: ProxyConfig): UpgradeHandlerFn {
   return async function upgradeHandler(req, clientSocket, head, ssl) {
-    const clientOptions = await CommonUtils.getOptionsFromRequest(
-      req,
-      ssl,
-      proxyConfig.externalProxy,
-      undefined,
-    );
+    const context = new Context(req, undefined, false);
+
+    const clientOptions = CommonUtils.getOptionsFromRequest(context, proxyConfig);
     const proxyReq = (ssl ? https : http).request(clientOptions);
 
     proxyReq.on('error', error => {

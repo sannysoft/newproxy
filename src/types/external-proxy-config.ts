@@ -1,5 +1,5 @@
 import * as url from 'url';
-import { isNullOrUndefined } from '../common/util-fns';
+import { isNullOrUndefined, makeErr } from '../common/util-fns';
 
 export type ExternalProxyConfig = ExternalProxyConfigObject | string;
 export type ExternalProxyConfigOrNull = ExternalProxyConfig | undefined;
@@ -53,5 +53,18 @@ export class ExternalProxyHelper {
     if (!authString) return undefined;
 
     return Buffer.from(authString).toString('base64');
+  }
+
+  public getConfigObject(): ExternalProxyConfigObject {
+    if (typeof this.config === 'object' && 'host' in this.config) return this.config;
+
+    const proxyUrl = this.getUrlObject();
+    const [login, password] = this.getLoginAndPassword()?.split(':') ?? [undefined, undefined];
+
+    return {
+      host: proxyUrl.host ?? makeErr('No host set for proxy'),
+      username: login,
+      password: password,
+    };
   }
 }

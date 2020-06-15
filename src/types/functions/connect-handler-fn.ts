@@ -1,8 +1,3 @@
-import { IncomingMessage } from 'http';
-import stream from 'stream';
+import { ContextNoMitm } from '../contexts/context-no-mitm';
 
-export type ConnectHandlerFn = (
-  connectRequest: IncomingMessage,
-  clientSocket: stream.Duplex,
-  head: Buffer,
-) => void;
+export type ConnectHandlerFn = (context: ContextNoMitm) => void;

@@ -1,10 +1,10 @@
 import { RequestOptions, Agent } from 'http';
 
 export interface ExtendedRequestOptions extends RequestOptions {
-  customSocketId?: number | undefined;
+  customSocketId?: number;
 
   agent: Agent & { getName: (options: RequestOptions) => string };
 
-  host?: string | undefined;
+  host?: string;
   url: string;
 }

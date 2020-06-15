@@ -21,6 +21,9 @@ import { FakeServersCenter } from './tls/fake-servers-center';
 import { ErrorLoggingFn } from './types/functions/error-logging-fn';
 import { ExternalProxyConfig } from './types/external-proxy-config';
 import { makeErr } from './common/util-fns';
+import { StatusFn } from './types/functions/status-fn';
+import { Context } from './types/contexts/context';
+import { ContextNoMitm } from './types/contexts/context-no-mitm';
 
 // eslint-disable-next-line import/no-default-export
 export default class NewProxy {
@@ -66,6 +69,11 @@ export default class NewProxy {
     return this;
   }
 
+  public metrics(value: StatusFn): NewProxy {
+    this.proxyConfig.statusFn = value;
+    return this;
+  }
+
   public errorLog(value: boolean | ErrorLoggingFn): NewProxy {
     this.proxyConfig.errorLog = value;
     return this;
@@ -108,6 +116,9 @@ export default class NewProxy {
 
       log: userConfig.log || true,
       errorLog: userConfig.errorLog || true,
+
+      statusFn: userConfig.statusFn || undefined,
+      statusNoMitmFn: userConfig.statusNoMitmFn || undefined,
 
       sslMitm: userConfig.sslMitm || undefined,
       requestInterceptor: userConfig.requestInterceptor || undefined,
@@ -155,8 +166,9 @@ export default class NewProxy {
       });
 
       this.httpServer.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
-        const ssl = false;
-        this.requestHandler!!(req, res, ssl);
+        // Plain HTTP request
+        const context = new Context(req, res, false);
+        this.requestHandler!!(context);
       });
 
       // tunneling for https
@@ -164,7 +176,8 @@ export default class NewProxy {
         'connect',
         (connectRequest: http.IncomingMessage, clientSocket: stream.Duplex, head: Buffer) => {
           clientSocket.on('error', () => {});
-          this.connectHandler!!(connectRequest, clientSocket, head);
+          const context = new ContextNoMitm(connectRequest, clientSocket, head);
+          this.connectHandler!!(context);
         },
       );
 

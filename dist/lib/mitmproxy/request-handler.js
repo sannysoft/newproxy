@@ -43,44 +43,47 @@ var https = require("https");
 var debug_1 = require("debug");
 var common_utils_1 = require("../common/common-utils");
 var logger_1 = require("../common/logger");
-var connections_1 = require("../common/connections");
+var contexts_1 = require("../common/contexts");
 var util_fns_1 = require("../common/util-fns");
 var request_timeout_error_1 = require("../errors/request-timeout-error");
 var logger = debug_1.default('newproxy.requestHandler');
 var RequestHandler = /** @class */ (function () {
-    function RequestHandler(req, res, ssl, proxyConfig) {
-        this.req = req;
-        this.res = res;
-        this.ssl = ssl;
+    function RequestHandler(context, proxyConfig) {
+        var _a;
+        this.context = context;
+        this.req = context.clientReq;
+        this.res = (_a = context.clientRes) !== null && _a !== void 0 ? _a : util_fns_1.makeErr('No clientResponse set in context');
         this.proxyConfig = proxyConfig;
-        this.rOptions = common_utils_1.CommonUtils.getOptionsFromRequest(this.req, this.ssl, this.proxyConfig.externalProxy, this.res);
+        this.rOptions = common_utils_1.CommonUtils.getOptionsFromRequest(this.context, this.proxyConfig);
     }
     RequestHandler.prototype.go = function () {
+        var _a;
         return __awaiter(this, void 0, void 0, function () {
-            var error_1, proxyRequestPromise, _a, error_2, error_3, error_4;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            var error_1, proxyRequestPromise, _b, error_2, error_3, error_4;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
                     case 0:
-                        logger("Request handler called for request (ssl=" + this.ssl + ") " + this.req.toString());
+                        logger("Request handler called for request (ssl=" + this.context.ssl + ") " + this.req.toString());
                         if (this.res.finished) {
                             return [2 /*return*/];
                         }
                         this.setKeepAlive();
-                        _b.label = 1;
+                        _c.label = 1;
                     case 1:
-                        _b.trys.push([1, 14, , 15]);
-                        _b.label = 2;
+                        _c.trys.push([1, 14, , 15]);
+                        _c.label = 2;
                     case 2:
-                        _b.trys.push([2, 4, , 5]);
+                        _c.trys.push([2, 4, , 5]);
                         return [4 /*yield*/, this.interceptRequest()];
                     case 3:
-                        _b.sent();
+                        _c.sent();
                         return [3 /*break*/, 5];
                     case 4:
-                        error_1 = _b.sent();
+                        error_1 = _c.sent();
                         logger_1.logError(error_1, 'Problem at request interception');
                         if (!this.res.finished) {
-                            this.res.writeHead(500);
+                            this.context.setStatusCode(502);
+                            this.res.writeHead(502);
                             this.res.write("Proxy Warning:\r\n\r\n" + error_1.toString());
                             this.res.end();
                         }
@@ -89,25 +92,28 @@ var RequestHandler = /** @class */ (function () {
                         if (this.res.finished) {
                             return [2 /*return*/];
                         }
-                        _b.label = 6;
+                        _c.label = 6;
                     case 6:
-                        _b.trys.push([6, 8, , 9]);
+                        _c.trys.push([6, 8, , 9]);
                         proxyRequestPromise = this.getProxyRequestPromise();
-                        _a = this;
+                        _b = this;
                         return [4 /*yield*/, proxyRequestPromise];
                     case 7:
-                        _a.proxyRes = _b.sent();
+                        _b.proxyRes = _c.sent();
+                        this.context.setStatusCode((_a = this.proxyRes) === null || _a === void 0 ? void 0 : _a.statusCode, this.proxyRes.socket.bytesWritten, this.proxyRes.socket.bytesRead);
                         return [3 /*break*/, 9];
                     case 8:
-                        error_2 = _b.sent();
+                        error_2 = _c.sent();
                         logger_1.logError(error_2, 'Problem at request processing');
                         if (this.res.finished) {
                             return [2 /*return*/];
                         }
                         if (error_2 instanceof request_timeout_error_1.RequestTimeoutError) {
+                            this.context.setStatusCode(504);
                             this.res.writeHead(504);
                         }
                         else {
+                            this.context.setStatusCode(502);
                             this.res.writeHead(502);
                         }
                         this.res.write("Proxy Error:\r\n\r\n" + error_2.toString());
@@ -117,15 +123,15 @@ var RequestHandler = /** @class */ (function () {
                         if (this.res.finished) {
                             return [2 /*return*/];
                         }
-                        _b.label = 10;
+                        _c.label = 10;
                     case 10:
-                        _b.trys.push([10, 12, , 13]);
+                        _c.trys.push([10, 12, , 13]);
                         return [4 /*yield*/, this.interceptResponse()];
                     case 11:
-                        _b.sent();
+                        _c.sent();
                         return [3 /*break*/, 13];
                     case 12:
-                        error_3 = _b.sent();
+                        error_3 = _c.sent();
                         logger_1.logError(error_3, 'Problem with response interception');
                         if (!this.res.finished) {
                             this.res.writeHead(500);
@@ -140,7 +146,7 @@ var RequestHandler = /** @class */ (function () {
                         this.sendHeadersAndPipe();
                         return [3 /*break*/, 15];
                     case 14:
-                        error_4 = _b.sent();
+                        error_4 = _c.sent();
                         if (!this.res.finished) {
                             if (!this.res.headersSent)
                                 this.res.writeHead(500);
@@ -259,13 +265,14 @@ var RequestHandler = /** @class */ (function () {
             var _this = this;
             return __generator(this, function (_a) {
                 return [2 /*return*/, new Promise(function (resolve, reject) {
+                        var _a;
                         var next = function () {
                             resolve();
                         };
                         try {
                             if (typeof _this.proxyConfig.requestInterceptor === 'function') {
                                 var connectKey = _this.req.socket.remotePort + ":" + _this.req.socket.localPort;
-                                _this.proxyConfig.requestInterceptor.call(null, _this.rOptions, _this.req, _this.res, _this.ssl, connections_1.default[connectKey], next);
+                                _this.proxyConfig.requestInterceptor.call(null, _this.rOptions, _this.req, _this.res, _this.context.ssl, (_a = contexts_1.default[connectKey]) === null || _a === void 0 ? void 0 : _a.connectRequest, next);
                             }
                             else {
                                 resolve();
@@ -289,7 +296,7 @@ var RequestHandler = /** @class */ (function () {
                         };
                         try {
                             if (typeof _this.proxyConfig.responseInterceptor === 'function') {
-                                _this.proxyConfig.responseInterceptor.call(null, _this.req, _this.res, (_a = _this.proxyReq) !== null && _a !== void 0 ? _a : util_fns_1.makeErr('No proxyReq'), (_b = _this.proxyRes) !== null && _b !== void 0 ? _b : util_fns_1.makeErr('No proxyRes'), _this.ssl, next);
+                                _this.proxyConfig.responseInterceptor.call(null, _this.req, _this.res, (_a = _this.proxyReq) !== null && _a !== void 0 ? _a : util_fns_1.makeErr('No proxyReq'), (_b = _this.proxyRes) !== null && _b !== void 0 ? _b : util_fns_1.makeErr('No proxyRes'), _this.context.ssl, next);
                             }
                             else {
                                 resolve();

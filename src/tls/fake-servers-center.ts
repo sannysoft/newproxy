@@ -11,6 +11,7 @@ import { ServerObjectPromise } from '../types/server-object-promise';
 import { UpgradeHandlerFn } from '../types/functions/upgrade-handler-fn';
 import { RequestHandlerFn } from '../types/functions/request-handler-fn';
 import { logError } from '../common/logger';
+import { Context } from '../types/contexts/context';
 
 const pki = forge.pki;
 
@@ -125,9 +126,9 @@ export class FakeServersCenter {
       });
 
       fakeServer.on('request', (req, res) => {
-        const ssl = true;
         logger(`New request received by fake-server: ${res.toString()}`);
-        this.requestHandler(req, res, ssl);
+        const context = new Context(req, res, true);
+        this.requestHandler(context);
       });
 
       fakeServer.on('error', e => {

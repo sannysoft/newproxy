@@ -1,7 +1,5 @@
 import * as url from 'url';
-import * as http from 'http';
 import * as AgentKeepAlive from 'agentkeepalive';
-import { ExternalProxyFn } from '../types/functions/external-proxy-fn';
 import { ExtendedRequestOptions } from '../types/request-options';
 import { logError } from './logger';
 import {
@@ -9,9 +7,11 @@ import {
   ExternalProxyHelper,
   isExternalProxyConfigObject,
 } from '../types/external-proxy-config';
-import connections from './connections';
+import contexts from './contexts';
 import { TunnelingAgent } from './tunneling-agent';
 import { makeErr } from './util-fns';
+import { Context } from '../types/contexts/context';
+import { ProxyConfig } from '../types/proxy-config';
 
 const httpsAgent = new AgentKeepAlive.HttpsAgent({
   keepAlive: true,
@@ -27,19 +27,19 @@ let socketId = 0;
 
 export class CommonUtils {
   public static getOptionsFromRequest(
-    req: http.IncomingMessage,
-    ssl: boolean,
-    externalProxy: ExternalProxyConfig | ExternalProxyFn | undefined,
-    res?: http.ServerResponse | undefined,
+    context: Context,
+    proxyConfig: ProxyConfig,
   ): ExtendedRequestOptions {
-    const urlObject = url.parse(req?.url ?? makeErr('No URL set for the request'));
-    const defaultPort = ssl ? 443 : 80;
-    const protocol = ssl ? 'https:' : 'http:';
-    const headers = Object.assign({}, req.headers);
+    const urlObject = url.parse(context.clientReq?.url ?? makeErr('No URL set for the request'));
+    const defaultPort = context.ssl ? 443 : 80;
+    const protocol = context.ssl ? 'https:' : 'http:';
+    const headers = Object.assign({}, context.clientReq.headers);
 
     let externalProxyHelper: ExternalProxyHelper | undefined;
     try {
-      externalProxyHelper = this.getExternalProxyHelper(externalProxy, req, ssl, res);
+      externalProxyHelper = this.getExternalProxyHelper(context, proxyConfig);
+      // eslint-disable-next-line no-param-reassign
+      context.externalProxy = externalProxyHelper?.getConfigObject();
     } catch (error) {
       logError(error, 'Wrong external proxy set');
     }
@@ -67,7 +67,7 @@ export class CommonUtils {
     const options: ExtendedRequestOptions = {
       protocol: protocol,
       hostname: requestHost.split(':')[0],
-      method: req.method ?? makeErr('No request method set'),
+      method: context.clientReq.method ?? makeErr('No request method set'),
       port: Number(requestHost.split(':')[1] || defaultPort),
       path: urlObject.path ?? makeErr('No request path set'),
       headers: headers,
@@ -84,10 +84,11 @@ export class CommonUtils {
       ) {
         const externalURL = externalProxyHelper.getUrlObject();
         const host =
-          externalURL.hostname ?? makeErr(`No external proxy hostname set - ${externalProxy}`);
+          externalURL.hostname ??
+          makeErr(`No external proxy hostname set - ${context.externalProxy}`);
 
         const port = Number(
-          externalURL.port ?? makeErr(`No external proxy port set - ${externalProxy}`),
+          externalURL.port ?? makeErr(`No external proxy port set - ${context.externalProxy}`),
         );
 
         options.hostname = host;
@@ -110,33 +111,40 @@ export class CommonUtils {
     // TODO: Check if we ever have customSocketId
     // mark a socketId for Agent to bind socket for NTLM
     // @ts-ignore
-    if (req.socket.customSocketId) {
+    if (context.clientReq.socket.customSocketId) {
       // @ts-ignore
-      options.customSocketId = req.socket.customSocketId;
+      options.customSocketId = context.clientReq.socket.customSocketId;
     } else if (headers.authorization) {
       // @ts-ignore
-      req.socket.customSocketId = socketId++;
+      // eslint-disable-next-line no-param-reassign
+      context.clientReq.socket.customSocketId = socketId++;
       // @ts-ignore
-      options.customSocketId = req.socket.customSocketId;
+      options.customSocketId = context.clientReq.socket.customSocketId;
     }
 
     return options;
   }
 
   private static getExternalProxyHelper(
-    externalProxy: ExternalProxyConfig | ExternalProxyFn | undefined,
-    req: http.IncomingMessage,
-    ssl: boolean,
-    res: http.ServerResponse | undefined,
+    context: Context,
+    proxyConfig: ProxyConfig,
   ): ExternalProxyHelper | undefined {
     let externalProxyConfig: ExternalProxyConfig | undefined;
+
+    const externalProxy = proxyConfig.externalProxy;
+    const req = context.clientReq;
 
     if (externalProxy) {
       if (typeof externalProxy === 'string' || isExternalProxyConfigObject(externalProxy)) {
         externalProxyConfig = externalProxy;
       } else if (typeof externalProxy === 'function') {
         const connectKey = `${req.socket.remotePort}:${req.socket.localPort}`;
-        externalProxyConfig = externalProxy(req, ssl, res, connections[connectKey]);
+        externalProxyConfig = externalProxy(
+          req,
+          context.ssl,
+          context.clientRes,
+          contexts[connectKey]?.connectRequest,
+        );
 
         // Check return type is proper config
         if (

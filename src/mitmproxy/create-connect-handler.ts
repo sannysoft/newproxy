@@ -1,9 +1,7 @@
 import * as url from 'url';
 import * as net from 'net';
-import { IncomingMessage } from 'http';
-import stream from 'stream';
 import { FakeServersCenter } from '../tls/fake-servers-center';
-import connections from '../common/connections';
+import contexts from '../common/contexts';
 import { ExtendedNetSocket } from '../types/extended-net-socket';
 import { ConnectHandlerFn } from '../types/functions/connect-handler-fn';
 import { ServerObject } from '../types/server-object';
@@ -11,6 +9,7 @@ import { logError } from '../common/logger';
 import { ProxyConfig } from '../types/proxy-config';
 import { ExternalProxyHelper, ExternalProxyConfigOrNull } from '../types/external-proxy-config';
 import { makeErr } from '../common/util-fns';
+import { ContextNoMitm } from '../types/contexts/context-no-mitm';
 
 const localIP = '127.0.0.1';
 
@@ -19,24 +18,25 @@ export function createConnectHandler(
   fakeServerCenter: FakeServersCenter,
 ): ConnectHandlerFn {
   // return
-  return function connectHandler(
-    connectRequest: IncomingMessage,
-    clientSocket: stream.Duplex,
-    head: Buffer,
-  ) {
-    const srvUrl = url.parse(`https://${connectRequest.url}`);
+  return function connectHandler(context: ContextNoMitm) {
+    const srvUrl = url.parse(`https://${context.connectRequest.url}`);
 
     let interceptSsl = false;
     try {
       interceptSsl =
         (typeof proxyConfig.sslMitm === 'function' &&
-          proxyConfig.sslMitm.call(null, connectRequest, clientSocket, head)) ||
+          proxyConfig.sslMitm.call(
+            null,
+            context.connectRequest,
+            context.clientSocket,
+            context.head,
+          )) ||
         proxyConfig.sslMitm === true;
     } catch (error) {
       logError(error, 'Error at sslMitm function');
     }
 
-    if (!clientSocket.writable) return;
+    if (!context.clientSocket.writable) return;
 
     const serverHostname = srvUrl.hostname ?? makeErr('No hostname set for https request');
     const serverPort = Number(srvUrl.port || 443);
@@ -47,22 +47,31 @@ export function createConnectHandler(
         proxyConfig.externalProxyNoMitm &&
         typeof proxyConfig.externalProxyNoMitm === 'function'
       ) {
-        externalProxy = proxyConfig.externalProxyNoMitm(connectRequest, clientSocket);
+        externalProxy = proxyConfig.externalProxyNoMitm(
+          context.connectRequest,
+          context.clientSocket,
+        );
       } else externalProxy = proxyConfig.externalProxyNoMitm;
+
+      context.markStart();
+      context.clientSocket.on('close', () => {
+        if (proxyConfig.statusNoMitmFn) {
+          const statusData = context.getStatusData();
+          proxyConfig.statusNoMitmFn(statusData);
+        }
+      });
 
       if (externalProxy) {
         connectNoMitmExternalProxy(
           new ExternalProxyHelper(externalProxy),
-          connectRequest,
-          clientSocket,
-          head,
+          context,
           serverHostname,
           serverPort,
         );
         return;
       }
 
-      connect(connectRequest, clientSocket, head, serverHostname, serverPort);
+      connect(context, serverHostname, serverPort);
       return;
     }
 
@@ -73,7 +82,7 @@ export function createConnectHandler(
           serverPort,
         );
 
-        connect(connectRequest, clientSocket, head, localIP, serverObject.port);
+        connect(context, localIP, serverObject.port);
       } catch (error) {
         logError(error);
       }
@@ -81,20 +90,14 @@ export function createConnectHandler(
   };
 }
 
-function connect(
-  connectRequest: IncomingMessage,
-  clientSocket: stream.Duplex,
-  head: Buffer,
-  hostname: string,
-  port: number,
-): ExtendedNetSocket {
+function connect(context: ContextNoMitm, hostname: string, port: number): ExtendedNetSocket {
   // tunneling https
   const proxySocket: ExtendedNetSocket = net.connect(port, hostname, () => {
-    clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-    proxySocket.write(head);
-    proxySocket.pipe(clientSocket);
+    context.clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+    proxySocket.write(context.head);
+    proxySocket.pipe(context.clientSocket);
 
-    clientSocket.pipe(proxySocket);
+    context.clientSocket.pipe(proxySocket);
   });
 
   proxySocket.on('error', () => {
@@ -103,11 +106,11 @@ function connect(
 
   proxySocket.on('ready', () => {
     proxySocket.connectKey = `${proxySocket.localPort}:${proxySocket.remotePort}`;
-    connections[proxySocket.connectKey] = connectRequest;
+    contexts[proxySocket.connectKey] = context;
   });
 
   proxySocket.on('end', () => {
-    if (proxySocket.connectKey) delete connections[proxySocket.connectKey];
+    if (proxySocket.connectKey) delete contexts[proxySocket.connectKey];
   });
 
   return proxySocket;
@@ -115,9 +118,7 @@ function connect(
 
 function connectNoMitmExternalProxy(
   proxyHelper: ExternalProxyHelper,
-  connectRequest: IncomingMessage,
-  clientSocket: stream.Duplex,
-  head: Buffer,
+  context: ContextNoMitm,
   hostname: string,
   port: number,
 ): ExtendedNetSocket {
@@ -125,10 +126,12 @@ function connectNoMitmExternalProxy(
     Number(proxyHelper.getUrlObject().port!!),
     proxyHelper.getUrlObject().hostname!!,
     () => {
-      proxySocket.write(`CONNECT ${hostname}:${port} HTTP/${connectRequest.httpVersion}\r\n`);
+      proxySocket.write(
+        `CONNECT ${hostname}:${port} HTTP/${context.connectRequest.httpVersion}\r\n`,
+      );
       ['host', 'user-agent', 'proxy-connection'].forEach(name => {
-        if (name in connectRequest.headers) {
-          proxySocket.write(`${name}: ${connectRequest.headers[name]}\r\n`);
+        if (name in context.connectRequest.headers) {
+          proxySocket.write(`${name}: ${context.connectRequest.headers[name]}\r\n`);
         }
       });
 
@@ -140,9 +143,9 @@ function connectNoMitmExternalProxy(
 
       proxySocket.write('\r\n');
 
-      proxySocket.pipe(clientSocket);
+      proxySocket.pipe(context.clientSocket);
 
-      clientSocket.pipe(proxySocket);
+      context.clientSocket.pipe(proxySocket);
     },
   );
 

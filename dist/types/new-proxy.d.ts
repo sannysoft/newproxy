@@ -8,6 +8,7 @@ import { ExternalProxyFn, ExternalProxyNoMitmFn } from './types/functions/extern
 import { LoggingFn } from './types/functions/log-fn';
 import { ErrorLoggingFn } from './types/functions/error-logging-fn';
 import { ExternalProxyConfig } from './types/external-proxy-config';
+import { StatusFn } from './types/functions/status-fn';
 export default class NewProxy {
     protected proxyConfig: ProxyConfig;
     httpServer: http.Server;
@@ -21,6 +22,7 @@ export default class NewProxy {
     requestInterceptor(value: RequestInterceptorFn): NewProxy;
     responseInterceptor(value: ResponseInterceptorFn): NewProxy;
     log(value: boolean | LoggingFn): NewProxy;
+    metrics(value: StatusFn): NewProxy;
     errorLog(value: boolean | ErrorLoggingFn): NewProxy;
     ca(caKeyPath: string, caCertPath: string): NewProxy;
     externalProxy(value: ExternalProxyConfig | ExternalProxyFn | undefined): NewProxy;

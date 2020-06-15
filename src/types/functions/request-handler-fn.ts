@@ -1,3 +1,3 @@
-import { IncomingMessage, ServerResponse } from 'http';
+import { Context } from '../contexts/context';
 
-export type RequestHandlerFn = (req: IncomingMessage, res: ServerResponse, ssl: boolean) => void;
+export type RequestHandlerFn = (context: Context) => void;

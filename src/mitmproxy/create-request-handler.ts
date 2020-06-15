@@ -1,11 +1,23 @@
 import { ProxyConfig } from '../types/proxy-config';
 import { RequestHandlerFn } from '../types/functions/request-handler-fn';
 import { RequestHandler } from './request-handler';
+import { Context } from '../types/contexts/context';
 
 // create requestHandler function
-export function createRequestHandler(config: ProxyConfig): RequestHandlerFn {
-  return function requestHandler(req, res, ssl): void {
-    const reqHandler = new RequestHandler(req, res, ssl, config);
+export function createRequestHandler(proxyConfig: ProxyConfig): RequestHandlerFn {
+  return function requestHandler(context: Context): void {
+    const reqHandler = new RequestHandler(context, proxyConfig);
+
+    context.clientReq.socket.on('close', () => {
+      if (proxyConfig?.statusFn) {
+        const statusData = context.getStatusData();
+
+        proxyConfig.statusFn(statusData);
+      }
+    });
+
+    // Mark time of request processing start
+    context.markStart();
 
     (async () => {
       await reqHandler.go();

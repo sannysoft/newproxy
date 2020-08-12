@@ -8,7 +8,7 @@ const logger = debug('newproxy');
 let loggerConfig: boolean | LoggingFn = false;
 let errorLoggerConfig: boolean | ErrorLoggingFn = false;
 
-type colorFn = (str: string) => string;
+type ColorFn = (str: string) => string;
 
 export function setLoggerConfig(value: boolean | LoggingFn): void {
   loggerConfig = value;
@@ -18,7 +18,7 @@ export function setErrorLoggerConfig(value: boolean | ErrorLoggingFn): void {
   errorLoggerConfig = value;
 }
 
-export function log(message: string, colorFn?: colorFn): void {
+export function log(message: string, colorFn?: ColorFn): void {
   if (typeof loggerConfig === 'function') {
     loggerConfig(message);
   } else if (loggerConfig) {

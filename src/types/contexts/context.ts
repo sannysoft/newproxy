@@ -35,7 +35,7 @@ export class Context extends AbstractContext {
       this.status_code ?? 0,
       Math.max(0, (this.status_endTime ?? 0) - (this.status_startTime ?? 0)),
 
-      this.externalProxy ?? null,
+      this.externalProxy ?? undefined,
       this.clientReq.socket.bytesRead,
       this.clientReq.socket.bytesWritten,
 
@@ -49,13 +49,9 @@ export class Context extends AbstractContext {
     requestBytes: number = 0,
     responseBytes: number = 0,
   ): void {
-    // eslint-disable-next-line @typescript-eslint/camelcase
     if (!this.status_code && statusCode) this.status_code = statusCode;
 
-    // eslint-disable-next-line @typescript-eslint/camelcase
     this.status_requestedFromServerBytes = requestBytes;
-
-    // eslint-disable-next-line @typescript-eslint/camelcase
     this.status_serverRespondedBytes = responseBytes;
   }
 }

@@ -4,6 +4,7 @@ export declare type ExternalProxyConfig = ExternalProxyConfigObject | string;
 export declare type ExternalProxyConfigOrNull = ExternalProxyConfig | undefined;
 export interface ExternalProxyConfigObject {
     host: string;
+    port: number;
     username?: string;
     password?: string;
 }

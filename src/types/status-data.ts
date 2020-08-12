@@ -17,7 +17,7 @@ export class StatusData {
   /**
    * External proxy config if used
    */
-  public externalProxy: ExternalProxyConfigObject | null = null;
+  public externalProxy: ExternalProxyConfigObject | undefined = undefined;
 
   /**
    * Request processing rime
@@ -49,7 +49,7 @@ export class StatusData {
     ssl: boolean,
     status: number,
     time: number,
-    externalProxy: ExternalProxyConfigObject | null,
+    externalProxy: ExternalProxyConfigObject | undefined,
     requestBytes: number | undefined,
     responseBytes: number | undefined,
     serverRequestBytes: number,

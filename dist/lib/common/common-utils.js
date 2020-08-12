@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommonUtils = void 0;
 var url = require("url");
@@ -25,7 +36,7 @@ var CommonUtils = /** @class */ (function () {
         var urlObject = url.parse((_b = (_a = context.clientReq) === null || _a === void 0 ? void 0 : _a.url) !== null && _b !== void 0 ? _b : util_fns_1.makeErr('No URL set for the request'));
         var defaultPort = context.ssl ? 443 : 80;
         var protocol = context.ssl ? 'https:' : 'http:';
-        var headers = Object.assign({}, context.clientReq.headers);
+        var headers = __assign({}, context.clientReq.headers);
         var externalProxyHelper;
         try {
             externalProxyHelper = this.getExternalProxyHelper(context, proxyConfig);

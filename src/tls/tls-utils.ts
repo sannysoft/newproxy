@@ -195,7 +195,7 @@ export default class TlsUtils {
     cert.setSubject(attrs);
     cert.setIssuer(caPair.cert.subject.attributes);
 
-    const subjectAltNames = originCertificate.subjectaltname.split(', ').map(name => {
+    const subjectAltNames = originCertificate.subjectaltname.split(', ').map((name) => {
       return {
         // 2 is DNS type
         type: 2,
@@ -250,7 +250,7 @@ export default class TlsUtils {
   }
 
   public static isBrowserRequest(userAgent: string): boolean {
-    return /Mozilla/i.test(userAgent);
+    return /mozilla/i.test(userAgent);
   }
 
   public static isMappingHostName(DNSName: string, hostname: string): boolean {
@@ -284,7 +284,7 @@ export default class TlsUtils {
         caKeyPath,
         create: false,
       };
-    } catch (error) {
+    } catch (err) {
       const caObj = TlsUtils.createCA(caConfig.caName);
 
       const caCert = caObj.cert;

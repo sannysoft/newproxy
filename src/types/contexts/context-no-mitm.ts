@@ -26,7 +26,7 @@ export class ContextNoMitm extends AbstractContext {
 
     return new StatusDataNoMitm(
       this.connectRequest,
-      this.externalProxy ?? null,
+      this.externalProxy ?? undefined,
       Math.max(0, (this.status_endTime ?? 0) - (this.status_startTime ?? 0)),
     );
   }

@@ -4,13 +4,13 @@ import { ExternalProxyConfigObject } from './external-proxy-config';
 export class StatusDataNoMitm {
   public connectRequest: http.IncomingMessage;
 
-  public externalProxy: ExternalProxyConfigObject | null = null;
+  public externalProxy: ExternalProxyConfigObject | undefined = undefined;
 
   public time: number = 0;
 
   public constructor(
     connectRequest: http.IncomingMessage,
-    externalProxy: ExternalProxyConfigObject | null,
+    externalProxy: ExternalProxyConfigObject | undefined,
     time: number,
   ) {
     this.connectRequest = connectRequest;

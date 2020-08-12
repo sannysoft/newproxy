@@ -6,12 +6,13 @@ export type ExternalProxyConfigOrNull = ExternalProxyConfig | undefined;
 
 export interface ExternalProxyConfigObject {
   host: string;
+  port: number;
   username?: string;
   password?: string;
 }
 
 export function isExternalProxyConfigObject(obj: any): obj is ExternalProxyConfigObject {
-  return typeof obj === 'object' && obj.host;
+  return typeof obj === 'object' && obj.host && obj.port;
 }
 
 export class ExternalProxyHelper {
@@ -27,7 +28,7 @@ export class ExternalProxyHelper {
     if (typeof this.config === 'string') {
       proxy = this.config;
     } else {
-      proxy = this.config.host;
+      proxy = `${this.config.host}:${this.config.port}`;
     }
 
     if (!proxy.startsWith('http:') && !proxy.startsWith('https:')) proxy = `http://${proxy}`;
@@ -41,7 +42,7 @@ export class ExternalProxyHelper {
 
   public getLoginAndPassword(): string | undefined {
     if (typeof this.config === 'string') {
-      const auth = this.getUrlObject().auth;
+      const auth = this.getUrlObject()?.auth;
       return auth || undefined;
     }
 
@@ -59,13 +60,16 @@ export class ExternalProxyHelper {
   }
 
   public getConfigObject(): ExternalProxyConfigObject {
-    if (typeof this.config === 'object' && 'host' in this.config) return this.config;
+    if (isExternalProxyConfigObject(this.config)) {
+      return this.config;
+    }
 
     const proxyUrl = this.getUrlObject();
     const [login, password] = this.getLoginAndPassword()?.split(':') ?? [undefined, undefined];
 
     return {
       host: proxyUrl.host ?? makeErr('No host set for proxy'),
+      port: Number.parseInt(proxyUrl.port ?? makeErr('No port set for proxy'), 10),
       username: login,
       password: password,
     };

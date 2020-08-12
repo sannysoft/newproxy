@@ -1,4 +1,7 @@
 module.exports = {
+  parserOptions: {
+    project: 'tsconfig.json',
+  },
   plugins: ['@typescript-eslint', 'eslint-comments', 'jest', 'promise', 'unicorn'],
   extends: [
     'airbnb-typescript/base',
@@ -19,6 +22,9 @@ module.exports = {
   rules: {
     'import/prefer-default-export': 'off',
     'react/destructuring-assignment': 'off',
+    'unicorn/no-useless-undefined': 'off',
+    '@typescript-eslint/ban-ts-comment': 'off',
+    '@typescript-eslint/no-inferrable-types': 'off',
 
     'no-use-before-define': ['error', { functions: false, classes: true, variables: true }],
     // Makes no sense to allow type inferrence for expression parameters, but require typing the response

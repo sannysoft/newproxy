@@ -33,7 +33,7 @@ export class CommonUtils {
     const urlObject = url.parse(context.clientReq?.url ?? makeErr('No URL set for the request'));
     const defaultPort = context.ssl ? 443 : 80;
     const protocol = context.ssl ? 'https:' : 'http:';
-    const headers = Object.assign({}, context.clientReq.headers);
+    const headers = { ...context.clientReq.headers };
 
     let externalProxyHelper: ExternalProxyHelper | undefined;
     try {

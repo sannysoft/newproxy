@@ -1,3 +1,2 @@
-/// <reference types="node" />
-import { IncomingMessage, ServerResponse } from 'http';
-export declare type RequestHandlerFn = (req: IncomingMessage, res: ServerResponse, ssl: boolean) => void;
+import { Context } from '../contexts/context';
+export declare type RequestHandlerFn = (context: Context) => void;

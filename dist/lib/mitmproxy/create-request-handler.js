@@ -39,10 +39,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createRequestHandler = void 0;
 var request_handler_1 = require("./request-handler");
 // create requestHandler function
-function createRequestHandler(config) {
-    return function requestHandler(req, res, ssl) {
+function createRequestHandler(proxyConfig) {
+    return function requestHandler(context) {
         var _this = this;
-        var reqHandler = new request_handler_1.RequestHandler(req, res, ssl, config);
+        var reqHandler = new request_handler_1.RequestHandler(context, proxyConfig);
+        context.clientReq.socket.on('close', function () {
+            if (proxyConfig === null || proxyConfig === void 0 ? void 0 : proxyConfig.statusFn) {
+                var statusData = context.getStatusData();
+                proxyConfig.statusFn(statusData);
+            }
+        });
+        // Mark time of request processing start
+        context.markStart();
         (function () { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {

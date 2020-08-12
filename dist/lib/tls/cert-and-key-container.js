@@ -60,7 +60,6 @@ var CertAndKeyContainer = /** @class */ (function () {
                         }
                     if (!certObj)
                         certObj = tls_utils_1.default.createFakeCertificateByDomain(_this.caPair, hostname);
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     newResolve(certObj);
                 }
                 catch (error) {
@@ -70,14 +69,12 @@ var CertAndKeyContainer = /** @class */ (function () {
             preReq.setTimeout(_this.getCertSocketTimeout, function () {
                 if (!certObj) {
                     certObj = tls_utils_1.default.createFakeCertificateByDomain(_this.caPair, hostname);
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     newResolve(certObj);
                 }
             });
             preReq.on('error', function () {
                 if (!certObj) {
                     certObj = tls_utils_1.default.createFakeCertificateByDomain(_this.caPair, hostname);
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     newResolve(certObj);
                 }
             });

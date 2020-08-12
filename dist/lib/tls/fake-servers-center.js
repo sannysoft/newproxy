@@ -44,6 +44,7 @@ var debug_1 = require("debug");
 var tls_utils_1 = require("./tls-utils");
 var cert_and_key_container_1 = require("./cert-and-key-container");
 var logger_1 = require("../common/logger");
+var context_1 = require("../types/contexts/context");
 var pki = forge.pki;
 var logger = debug_1.default('newproxy.fakeServer');
 var FakeServersCenter = /** @class */ (function () {
@@ -140,9 +141,9 @@ var FakeServersCenter = /** @class */ (function () {
                                     logger("Fake server created at port " + address.port);
                                 });
                                 fakeServer.on('request', function (req, res) {
-                                    var ssl = true;
                                     logger("New request received by fake-server: " + res.toString());
-                                    _this.requestHandler(req, res, ssl);
+                                    var context = new context_1.Context(req, res, true);
+                                    _this.requestHandler(context);
                                 });
                                 fakeServer.on('error', function (e) {
                                     logger("Error by fake-server: " + e.toString());

@@ -15,4 +15,5 @@ export declare class ExternalProxyHelper {
     getProtocol(): string;
     getLoginAndPassword(): string | undefined;
     getBasicAuth(): string | undefined;
+    getConfigObject(): ExternalProxyConfigObject;
 }

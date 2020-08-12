@@ -39,28 +39,28 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createConnectHandler = void 0;
 var url = require("url");
 var net = require("net");
-var connections_1 = require("../common/connections");
+var contexts_1 = require("../common/contexts");
 var logger_1 = require("../common/logger");
 var external_proxy_config_1 = require("../types/external-proxy-config");
 var util_fns_1 = require("../common/util-fns");
 var localIP = '127.0.0.1';
 function createConnectHandler(proxyConfig, fakeServerCenter) {
     // return
-    return function connectHandler(connectRequest, clientSocket, head) {
+    return function connectHandler(context) {
         var _this = this;
         var _a;
-        var srvUrl = url.parse("https://" + connectRequest.url);
+        var srvUrl = url.parse("https://" + context.connectRequest.url);
         var interceptSsl = false;
         try {
             interceptSsl =
                 (typeof proxyConfig.sslMitm === 'function' &&
-                    proxyConfig.sslMitm.call(null, connectRequest, clientSocket, head)) ||
+                    proxyConfig.sslMitm.call(null, context.connectRequest, context.clientSocket, context.head)) ||
                     proxyConfig.sslMitm === true;
         }
         catch (error) {
             logger_1.logError(error, 'Error at sslMitm function');
         }
-        if (!clientSocket.writable)
+        if (!context.clientSocket.writable)
             return;
         var serverHostname = (_a = srvUrl.hostname) !== null && _a !== void 0 ? _a : util_fns_1.makeErr('No hostname set for https request');
         var serverPort = Number(srvUrl.port || 443);
@@ -68,15 +68,22 @@ function createConnectHandler(proxyConfig, fakeServerCenter) {
             var externalProxy = void 0;
             if (proxyConfig.externalProxyNoMitm &&
                 typeof proxyConfig.externalProxyNoMitm === 'function') {
-                externalProxy = proxyConfig.externalProxyNoMitm(connectRequest, clientSocket);
+                externalProxy = proxyConfig.externalProxyNoMitm(context.connectRequest, context.clientSocket);
             }
             else
                 externalProxy = proxyConfig.externalProxyNoMitm;
+            context.markStart();
+            context.clientSocket.on('close', function () {
+                if (proxyConfig.statusNoMitmFn) {
+                    var statusData = context.getStatusData();
+                    proxyConfig.statusNoMitmFn(statusData);
+                }
+            });
             if (externalProxy) {
-                connectNoMitmExternalProxy(new external_proxy_config_1.ExternalProxyHelper(externalProxy), connectRequest, clientSocket, head, serverHostname, serverPort);
+                connectNoMitmExternalProxy(new external_proxy_config_1.ExternalProxyHelper(externalProxy), context, serverHostname, serverPort);
                 return;
             }
-            connect(connectRequest, clientSocket, head, serverHostname, serverPort);
+            connect(context, serverHostname, serverPort);
             return;
         }
         (function () { return __awaiter(_this, void 0, void 0, function () {
@@ -88,7 +95,7 @@ function createConnectHandler(proxyConfig, fakeServerCenter) {
                         return [4 /*yield*/, fakeServerCenter.getServerPromise(serverHostname, serverPort)];
                     case 1:
                         serverObject = _a.sent();
-                        connect(connectRequest, clientSocket, head, localIP, serverObject.port);
+                        connect(context, localIP, serverObject.port);
                         return [3 /*break*/, 3];
                     case 2:
                         error_1 = _a.sent();
@@ -101,33 +108,33 @@ function createConnectHandler(proxyConfig, fakeServerCenter) {
     };
 }
 exports.createConnectHandler = createConnectHandler;
-function connect(connectRequest, clientSocket, head, hostname, port) {
+function connect(context, hostname, port) {
     // tunneling https
     var proxySocket = net.connect(port, hostname, function () {
-        clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-        proxySocket.write(head);
-        proxySocket.pipe(clientSocket);
-        clientSocket.pipe(proxySocket);
+        context.clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+        proxySocket.write(context.head);
+        proxySocket.pipe(context.clientSocket);
+        context.clientSocket.pipe(proxySocket);
     });
     proxySocket.on('error', function () {
         // logError(e);
     });
     proxySocket.on('ready', function () {
         proxySocket.connectKey = proxySocket.localPort + ":" + proxySocket.remotePort;
-        connections_1.default[proxySocket.connectKey] = connectRequest;
+        contexts_1.default[proxySocket.connectKey] = context;
     });
     proxySocket.on('end', function () {
         if (proxySocket.connectKey)
-            delete connections_1.default[proxySocket.connectKey];
+            delete contexts_1.default[proxySocket.connectKey];
     });
     return proxySocket;
 }
-function connectNoMitmExternalProxy(proxyHelper, connectRequest, clientSocket, head, hostname, port) {
+function connectNoMitmExternalProxy(proxyHelper, context, hostname, port) {
     var proxySocket = net.connect(Number(proxyHelper.getUrlObject().port), proxyHelper.getUrlObject().hostname, function () {
-        proxySocket.write("CONNECT " + hostname + ":" + port + " HTTP/" + connectRequest.httpVersion + "\r\n");
+        proxySocket.write("CONNECT " + hostname + ":" + port + " HTTP/" + context.connectRequest.httpVersion + "\r\n");
         ['host', 'user-agent', 'proxy-connection'].forEach(function (name) {
-            if (name in connectRequest.headers) {
-                proxySocket.write(name + ": " + connectRequest.headers[name] + "\r\n");
+            if (name in context.connectRequest.headers) {
+                proxySocket.write(name + ": " + context.connectRequest.headers[name] + "\r\n");
             }
         });
         var proxyAuth = proxyHelper.getLoginAndPassword();
@@ -136,8 +143,8 @@ function connectNoMitmExternalProxy(proxyHelper, connectRequest, clientSocket, h
             proxySocket.write("Proxy-Authorization: Basic " + basicAuth + "\r\n");
         }
         proxySocket.write('\r\n');
-        proxySocket.pipe(clientSocket);
-        clientSocket.pipe(proxySocket);
+        proxySocket.pipe(context.clientSocket);
+        context.clientSocket.pipe(proxySocket);
     });
     proxySocket.on('error', function (e) {
         logger_1.logError(e);

@@ -5,7 +5,7 @@ var url = require("url");
 var AgentKeepAlive = require("agentkeepalive");
 var logger_1 = require("./logger");
 var external_proxy_config_1 = require("../types/external-proxy-config");
-var connections_1 = require("./connections");
+var contexts_1 = require("./contexts");
 var tunneling_agent_1 = require("./tunneling-agent");
 var util_fns_1 = require("./util-fns");
 var httpsAgent = new AgentKeepAlive.HttpsAgent({
@@ -20,15 +20,17 @@ var socketId = 0;
 var CommonUtils = /** @class */ (function () {
     function CommonUtils() {
     }
-    CommonUtils.getOptionsFromRequest = function (req, ssl, externalProxy, res) {
-        var _a, _b, _c, _d, _e, _f, _g;
-        var urlObject = url.parse((_a = req === null || req === void 0 ? void 0 : req.url) !== null && _a !== void 0 ? _a : util_fns_1.makeErr('No URL set for the request'));
-        var defaultPort = ssl ? 443 : 80;
-        var protocol = ssl ? 'https:' : 'http:';
-        var headers = Object.assign({}, req.headers);
+    CommonUtils.getOptionsFromRequest = function (context, proxyConfig) {
+        var _a, _b, _c, _d, _e, _f, _g, _h;
+        var urlObject = url.parse((_b = (_a = context.clientReq) === null || _a === void 0 ? void 0 : _a.url) !== null && _b !== void 0 ? _b : util_fns_1.makeErr('No URL set for the request'));
+        var defaultPort = context.ssl ? 443 : 80;
+        var protocol = context.ssl ? 'https:' : 'http:';
+        var headers = Object.assign({}, context.clientReq.headers);
         var externalProxyHelper;
         try {
-            externalProxyHelper = this.getExternalProxyHelper(externalProxy, req, ssl, res);
+            externalProxyHelper = this.getExternalProxyHelper(context, proxyConfig);
+            // eslint-disable-next-line no-param-reassign
+            context.externalProxy = externalProxyHelper === null || externalProxyHelper === void 0 ? void 0 : externalProxyHelper.getConfigObject();
         }
         catch (error) {
             logger_1.logError(error, 'Wrong external proxy set');
@@ -51,25 +53,25 @@ var CommonUtils = /** @class */ (function () {
         else {
             agent = tunneling_agent_1.TunnelingAgent.getTunnelAgent(protocol === 'https:', externalProxyHelper);
         }
-        var requestHost = (_b = headers === null || headers === void 0 ? void 0 : headers.host) !== null && _b !== void 0 ? _b : util_fns_1.makeErr('No request hostname set');
+        var requestHost = (_c = headers === null || headers === void 0 ? void 0 : headers.host) !== null && _c !== void 0 ? _c : util_fns_1.makeErr('No request hostname set');
         var options = {
             protocol: protocol,
             hostname: requestHost.split(':')[0],
-            method: (_c = req.method) !== null && _c !== void 0 ? _c : util_fns_1.makeErr('No request method set'),
+            method: (_d = context.clientReq.method) !== null && _d !== void 0 ? _d : util_fns_1.makeErr('No request method set'),
             port: Number(requestHost.split(':')[1] || defaultPort),
-            path: (_d = urlObject.path) !== null && _d !== void 0 ? _d : util_fns_1.makeErr('No request path set'),
+            path: (_e = urlObject.path) !== null && _e !== void 0 ? _e : util_fns_1.makeErr('No request path set'),
             headers: headers,
             agent: agent,
             timeout: 60000,
-            url: protocol + "//" + requestHost + ((_e = urlObject.path) !== null && _e !== void 0 ? _e : ''),
+            url: protocol + "//" + requestHost + ((_f = urlObject.path) !== null && _f !== void 0 ? _f : ''),
         };
         try {
             if (protocol === 'http:' &&
                 externalProxyHelper &&
                 externalProxyHelper.getProtocol() === 'http:') {
                 var externalURL = externalProxyHelper.getUrlObject();
-                var host = (_f = externalURL.hostname) !== null && _f !== void 0 ? _f : util_fns_1.makeErr("No external proxy hostname set - " + externalProxy);
-                var port = Number((_g = externalURL.port) !== null && _g !== void 0 ? _g : util_fns_1.makeErr("No external proxy port set - " + externalProxy));
+                var host = (_g = externalURL.hostname) !== null && _g !== void 0 ? _g : util_fns_1.makeErr("No external proxy hostname set - " + context.externalProxy);
+                var port = Number((_h = externalURL.port) !== null && _h !== void 0 ? _h : util_fns_1.makeErr("No external proxy port set - " + context.externalProxy));
                 options.hostname = host;
                 options.port = port;
                 // Check if we have authorization here
@@ -89,27 +91,31 @@ var CommonUtils = /** @class */ (function () {
         // TODO: Check if we ever have customSocketId
         // mark a socketId for Agent to bind socket for NTLM
         // @ts-ignore
-        if (req.socket.customSocketId) {
+        if (context.clientReq.socket.customSocketId) {
             // @ts-ignore
-            options.customSocketId = req.socket.customSocketId;
+            options.customSocketId = context.clientReq.socket.customSocketId;
         }
         else if (headers.authorization) {
             // @ts-ignore
-            req.socket.customSocketId = socketId++;
+            // eslint-disable-next-line no-param-reassign
+            context.clientReq.socket.customSocketId = socketId++;
             // @ts-ignore
-            options.customSocketId = req.socket.customSocketId;
+            options.customSocketId = context.clientReq.socket.customSocketId;
         }
         return options;
     };
-    CommonUtils.getExternalProxyHelper = function (externalProxy, req, ssl, res) {
+    CommonUtils.getExternalProxyHelper = function (context, proxyConfig) {
+        var _a;
         var externalProxyConfig;
+        var externalProxy = proxyConfig.externalProxy;
+        var req = context.clientReq;
         if (externalProxy) {
             if (typeof externalProxy === 'string' || external_proxy_config_1.isExternalProxyConfigObject(externalProxy)) {
                 externalProxyConfig = externalProxy;
             }
             else if (typeof externalProxy === 'function') {
                 var connectKey = req.socket.remotePort + ":" + req.socket.localPort;
-                externalProxyConfig = externalProxy(req, ssl, res, connections_1.default[connectKey]);
+                externalProxyConfig = externalProxy(req, context.ssl, context.clientRes, (_a = contexts_1.default[connectKey]) === null || _a === void 0 ? void 0 : _a.connectRequest);
                 // Check return type is proper config
                 if (externalProxyConfig &&
                     typeof externalProxyConfig !== 'string' &&

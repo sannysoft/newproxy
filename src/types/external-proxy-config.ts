@@ -11,7 +11,7 @@ export interface ExternalProxyConfigObject {
 }
 
 export function isExternalProxyConfigObject(obj: any): obj is ExternalProxyConfigObject {
-  return typeof obj === 'object' && obj.url;
+  return typeof obj === 'object' && obj.host;
 }
 
 export class ExternalProxyHelper {
@@ -40,7 +40,10 @@ export class ExternalProxyHelper {
   }
 
   public getLoginAndPassword(): string | undefined {
-    if (typeof this.config === 'string') return this.getUrlObject().auth;
+    if (typeof this.config === 'string') {
+      const auth = this.getUrlObject().auth;
+      return auth || undefined;
+    }
 
     if (isNullOrUndefined(this.config.username) || isNullOrUndefined(this.config.password))
       return undefined;

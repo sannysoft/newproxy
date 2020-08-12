@@ -41,56 +41,54 @@ var http_1 = require("http");
 var https_1 = require("https");
 var common_utils_1 = require("../common/common-utils");
 var logger_1 = require("../common/logger");
+var context_1 = require("../types/contexts/context");
 // create connectHandler function
 function createUpgradeHandler(proxyConfig) {
     return function upgradeHandler(req, clientSocket, head, ssl) {
         return __awaiter(this, void 0, void 0, function () {
-            var clientOptions, proxyReq;
+            var context, clientOptions, proxyReq;
             return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, common_utils_1.CommonUtils.getOptionsFromRequest(req, ssl, proxyConfig.externalProxy, undefined)];
-                    case 1:
-                        clientOptions = _a.sent();
-                        proxyReq = (ssl ? https_1.default : http_1.default).request(clientOptions);
-                        proxyReq.on('error', function (error) {
-                            logger_1.logError(error);
-                        });
-                        proxyReq.on('response', function (res) {
-                            // if upgrade event isn't going to happen, close the socket
-                            // @ts-ignore
-                            if (!res.upgrade)
-                                clientSocket.end();
-                        });
-                        proxyReq.on('upgrade', function (proxyRes, proxySocket, proxyHead) {
-                            proxySocket.on('error', function (error) {
-                                logger_1.logError(error);
-                            });
-                            clientSocket.on('error', function () {
-                                proxySocket.end();
-                            });
-                            proxySocket.setTimeout(0);
-                            proxySocket.setNoDelay(true);
-                            proxySocket.setKeepAlive(true, 0);
-                            if (proxyHead && proxyHead.length > 0)
-                                proxySocket.unshift(proxyHead);
-                            clientSocket.write(Object.keys(proxyRes.headers)
-                                .reduce(function (aggregator, key) {
-                                var value = proxyRes.headers[key];
-                                if (!Array.isArray(value)) {
-                                    aggregator.push(key + ": " + value);
-                                    return aggregator;
-                                }
-                                for (var i = 0; i < value.length; i++) {
-                                    aggregator.push(key + ": " + value[i]);
-                                }
-                                return aggregator;
-                            }, ['HTTP/1.1 101 Switching Protocols'])
-                                .join('\r\n') + "\r\n\r\n");
-                            proxySocket.pipe(clientSocket).pipe(proxySocket);
-                        });
-                        proxyReq.end();
-                        return [2 /*return*/];
-                }
+                context = new context_1.Context(req, undefined, false);
+                clientOptions = common_utils_1.CommonUtils.getOptionsFromRequest(context, proxyConfig);
+                proxyReq = (ssl ? https_1.default : http_1.default).request(clientOptions);
+                proxyReq.on('error', function (error) {
+                    logger_1.logError(error);
+                });
+                proxyReq.on('response', function (res) {
+                    // if upgrade event isn't going to happen, close the socket
+                    // @ts-ignore
+                    if (!res.upgrade)
+                        clientSocket.end();
+                });
+                proxyReq.on('upgrade', function (proxyRes, proxySocket, proxyHead) {
+                    proxySocket.on('error', function (error) {
+                        logger_1.logError(error);
+                    });
+                    clientSocket.on('error', function () {
+                        proxySocket.end();
+                    });
+                    proxySocket.setTimeout(0);
+                    proxySocket.setNoDelay(true);
+                    proxySocket.setKeepAlive(true, 0);
+                    if (proxyHead && proxyHead.length > 0)
+                        proxySocket.unshift(proxyHead);
+                    clientSocket.write(Object.keys(proxyRes.headers)
+                        .reduce(function (aggregator, key) {
+                        var value = proxyRes.headers[key];
+                        if (!Array.isArray(value)) {
+                            aggregator.push(key + ": " + value);
+                            return aggregator;
+                        }
+                        for (var i = 0; i < value.length; i++) {
+                            aggregator.push(key + ": " + value[i]);
+                        }
+                        return aggregator;
+                    }, ['HTTP/1.1 101 Switching Protocols'])
+                        .join('\r\n') + "\r\n\r\n");
+                    proxySocket.pipe(clientSocket).pipe(proxySocket);
+                });
+                proxyReq.end();
+                return [2 /*return*/];
             });
         });
     };

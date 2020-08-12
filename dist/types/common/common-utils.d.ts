@@ -1,9 +1,7 @@
-/// <reference types="node" />
-import * as http from 'http';
-import { ExternalProxyFn } from '../types/functions/external-proxy-fn';
 import { ExtendedRequestOptions } from '../types/request-options';
-import { ExternalProxyConfig } from '../types/external-proxy-config';
+import { Context } from '../types/contexts/context';
+import { ProxyConfig } from '../types/proxy-config';
 export declare class CommonUtils {
-    static getOptionsFromRequest(req: http.IncomingMessage, ssl: boolean, externalProxy: ExternalProxyConfig | ExternalProxyFn | undefined, res?: http.ServerResponse | undefined): ExtendedRequestOptions;
+    static getOptionsFromRequest(context: Context, proxyConfig: ProxyConfig): ExtendedRequestOptions;
     private static getExternalProxyHelper;
 }

@@ -229,7 +229,7 @@ var TlsUtils = /** @class */ (function () {
         };
     };
     TlsUtils.isBrowserRequest = function (userAgent) {
-        return /Mozilla/i.test(userAgent);
+        return /mozilla/i.test(userAgent);
     };
     TlsUtils.isMappingHostName = function (DNSName, hostname) {
         var reg = DNSName.replace(/\./g, '\\.').replace(/\*/g, '[^.]+');
@@ -257,7 +257,7 @@ var TlsUtils = /** @class */ (function () {
                 create: false,
             };
         }
-        catch (error) {
+        catch (err) {
             var caObj = TlsUtils.createCA(ca_config_1.caConfig.caName);
             var caCert = caObj.cert;
             var cakey = caObj.key;

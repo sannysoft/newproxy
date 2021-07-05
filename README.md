@@ -48,11 +48,13 @@ const proxy = new NewProxy()
 
     next();
   })
-  .externalProxyNoMitm('http://127.0.0.1:8800'); // Set external proxy for non-MITM SSL requests
+  .externalProxyNoMitm('http://127.0.0.1:8800') // Set external proxy for non-MITM SSL requests
   .externalProxy('http://127.0.0.1:8888'); // We can set external proxy statically or by fn
   
 // Start listening 
-proxy.run();
+(async () => {
+  await proxy.run();
+})();
 
 ...
 

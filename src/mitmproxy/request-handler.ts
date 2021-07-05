@@ -1,39 +1,34 @@
 import { Agent, ClientRequest, IncomingMessage, ServerResponse } from 'http';
 import * as http from 'http';
 import * as https from 'https';
-import debug from 'debug';
+import * as Debug from 'debug';
 import * as net from 'net';
 import { CommonUtils } from '../common/common-utils';
 import { ProxyConfig } from '../types/proxy-config';
 import { ExtendedRequestOptions } from '../types/request-options';
 import { logError } from '../common/logger';
-import contexts from '../common/contexts';
+import { contexts } from '../common/contexts';
 import { makeErr } from '../common/util-fns';
 import { RequestTimeoutError } from '../errors/request-timeout-error';
 import { Context } from '../types/contexts/context';
+import { isPresent } from '../types/types';
 
-const logger = debug('newproxy.requestHandler');
+const logger = Debug('newproxy.requestHandler');
 
 export class RequestHandler {
   private readonly req: IncomingMessage;
 
   private readonly res: ServerResponse;
 
-  private proxyConfig: ProxyConfig;
-
-  private rOptions: ExtendedRequestOptions;
+  private readonly rOptions: ExtendedRequestOptions;
 
   private proxyReq?: ClientRequest;
 
   private proxyRes?: IncomingMessage;
 
-  private context: Context;
-
-  public constructor(context: Context, proxyConfig: ProxyConfig) {
-    this.context = context;
+  public constructor(private readonly context: Context, private readonly proxyConfig: ProxyConfig) {
     this.req = context.clientReq;
     this.res = context.clientRes ?? makeErr('No clientResponse set in context');
-    this.proxyConfig = proxyConfig;
     this.rOptions = CommonUtils.getOptionsFromRequest(this.context, this.proxyConfig);
   }
 
@@ -128,7 +123,7 @@ export class RequestHandler {
       logger('Headers sent already');
     } else {
       // prevent duplicate set headers
-      Object.keys(proxyRes.headers).forEach(key => {
+      Object.keys(proxyRes.headers).forEach((key) => {
         try {
           let headerName = key;
           const headerValue = proxyRes.headers[headerName];
@@ -176,8 +171,7 @@ export class RequestHandler {
       if (
         this.rOptions.agent &&
         this.rOptions.agent instanceof Agent &&
-        this.rOptions.customSocketId != null &&
-        // @ts-ignore
+        isPresent(this.rOptions.customSocketId) &&
         this.rOptions.agent.getName
       ) {
         // @ts-ignore

@@ -3,7 +3,7 @@ import * as forge from 'node-forge';
 import { PeerCertificate } from 'tls';
 import { CaConfig } from '../types/ca-config';
 import { CaPair } from '../types/ca-pair';
-export default class TlsUtils {
+export declare class TlsUtils {
     static createCA(commonName: string): CaPair;
     static covertNodeCertToForgeCert(originCertificate: PeerCertificate): forge.pki.Certificate;
     static createFakeCertificateByDomain(caPair: CaPair, domain: string): CaPair;

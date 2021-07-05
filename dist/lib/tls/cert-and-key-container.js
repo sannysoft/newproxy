@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.CertAndKeyContainer = void 0;
 var https = require("https");
 var tls_utils_1 = require("./tls-utils");
 var logger_1 = require("../common/logger");
@@ -25,7 +26,7 @@ var CertAndKeyContainer = /** @class */ (function () {
             return havePromise;
         // @ts-ignore
         var certPromiseObj = {
-            mappingHostNames: [hostname],
+            mappingHostNames: [hostname], // temporary hostname
         };
         certPromiseObj.promise = this.createNewCertPromise(hostname, port, certPromiseObj);
         return this.addCertPromise(certPromiseObj).promise;
@@ -38,7 +39,7 @@ var CertAndKeyContainer = /** @class */ (function () {
                 if (once) {
                     once = false;
                     // eslint-disable-next-line no-param-reassign
-                    certPromiseObj.mappingHostNames = tls_utils_1.default.getMappingHostNamesFormCert(caPair.cert);
+                    certPromiseObj.mappingHostNames = tls_utils_1.TlsUtils.getMappingHostNamesFormCert(caPair.cert);
                     resolve(caPair);
                 }
             };
@@ -53,13 +54,13 @@ var CertAndKeyContainer = /** @class */ (function () {
                     var realCert = preRes.socket.getPeerCertificate();
                     if (realCert && 'subject' in realCert)
                         try {
-                            certObj = tls_utils_1.default.createFakeCertificateByCA(_this.caPair, realCert);
+                            certObj = tls_utils_1.TlsUtils.createFakeCertificateByCA(_this.caPair, realCert);
                         }
                         catch (error) {
                             logger_1.logError(error);
                         }
                     if (!certObj)
-                        certObj = tls_utils_1.default.createFakeCertificateByDomain(_this.caPair, hostname);
+                        certObj = tls_utils_1.TlsUtils.createFakeCertificateByDomain(_this.caPair, hostname);
                     newResolve(certObj);
                 }
                 catch (error) {
@@ -68,13 +69,13 @@ var CertAndKeyContainer = /** @class */ (function () {
             });
             preReq.setTimeout(_this.getCertSocketTimeout, function () {
                 if (!certObj) {
-                    certObj = tls_utils_1.default.createFakeCertificateByDomain(_this.caPair, hostname);
+                    certObj = tls_utils_1.TlsUtils.createFakeCertificateByDomain(_this.caPair, hostname);
                     newResolve(certObj);
                 }
             });
             preReq.on('error', function () {
                 if (!certObj) {
-                    certObj = tls_utils_1.default.createFakeCertificateByDomain(_this.caPair, hostname);
+                    certObj = tls_utils_1.TlsUtils.createFakeCertificateByDomain(_this.caPair, hostname);
                     newResolve(certObj);
                 }
             });
@@ -88,7 +89,7 @@ var CertAndKeyContainer = /** @class */ (function () {
             // eslint-disable-next-line no-restricted-syntax
             for (var _i = 0, mappingHostNames_1 = mappingHostNames; _i < mappingHostNames_1.length; _i++) {
                 var DNSName = mappingHostNames_1[_i];
-                if (tls_utils_1.default.isMappingHostName(DNSName, hostname)) {
+                if (tls_utils_1.TlsUtils.isMappingHostName(DNSName, hostname)) {
                     this.reRankCert(i);
                     return certPromiseObj.promise;
                 }
@@ -102,5 +103,5 @@ var CertAndKeyContainer = /** @class */ (function () {
     };
     return CertAndKeyContainer;
 }());
-exports.default = CertAndKeyContainer;
+exports.CertAndKeyContainer = CertAndKeyContainer;
 //# sourceMappingURL=cert-and-key-container.js.map

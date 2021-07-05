@@ -65,13 +65,9 @@ function createConnectHandler(proxyConfig, fakeServerCenter) {
         var serverHostname = (_a = srvUrl.hostname) !== null && _a !== void 0 ? _a : util_fns_1.makeErr('No hostname set for https request');
         var serverPort = Number(srvUrl.port || 443);
         if (!interceptSsl) {
-            var externalProxy = void 0;
-            if (proxyConfig.externalProxyNoMitm &&
-                typeof proxyConfig.externalProxyNoMitm === 'function') {
-                externalProxy = proxyConfig.externalProxyNoMitm(context.connectRequest, context.clientSocket);
-            }
-            else
-                externalProxy = proxyConfig.externalProxyNoMitm;
+            var externalProxy = proxyConfig.externalProxyNoMitm && typeof proxyConfig.externalProxyNoMitm === 'function'
+                ? proxyConfig.externalProxyNoMitm(context.connectRequest, context.clientSocket)
+                : proxyConfig.externalProxyNoMitm;
             context.markStart();
             context.clientSocket.on('close', function () {
                 if (proxyConfig.statusNoMitmFn) {
@@ -121,11 +117,11 @@ function connect(context, hostname, port) {
     });
     proxySocket.on('ready', function () {
         proxySocket.connectKey = proxySocket.localPort + ":" + proxySocket.remotePort;
-        contexts_1.default[proxySocket.connectKey] = context;
+        contexts_1.contexts[proxySocket.connectKey] = context;
     });
     proxySocket.on('end', function () {
         if (proxySocket.connectKey)
-            delete contexts_1.default[proxySocket.connectKey];
+            delete contexts_1.contexts[proxySocket.connectKey];
     });
     return proxySocket;
 }

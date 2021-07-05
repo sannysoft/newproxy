@@ -40,20 +40,21 @@ exports.RequestHandler = void 0;
 var http_1 = require("http");
 var http = require("http");
 var https = require("https");
-var debug_1 = require("debug");
+var Debug = require("debug");
 var common_utils_1 = require("../common/common-utils");
 var logger_1 = require("../common/logger");
 var contexts_1 = require("../common/contexts");
 var util_fns_1 = require("../common/util-fns");
 var request_timeout_error_1 = require("../errors/request-timeout-error");
-var logger = debug_1.default('newproxy.requestHandler');
+var types_1 = require("../types/types");
+var logger = Debug('newproxy.requestHandler');
 var RequestHandler = /** @class */ (function () {
     function RequestHandler(context, proxyConfig) {
         var _a;
         this.context = context;
+        this.proxyConfig = proxyConfig;
         this.req = context.clientReq;
         this.res = (_a = context.clientRes) !== null && _a !== void 0 ? _a : util_fns_1.makeErr('No clientResponse set in context');
-        this.proxyConfig = proxyConfig;
         this.rOptions = common_utils_1.CommonUtils.getOptionsFromRequest(this.context, this.proxyConfig);
     }
     RequestHandler.prototype.go = function () {
@@ -212,8 +213,7 @@ var RequestHandler = /** @class */ (function () {
             // use the bind socket for NTLM
             if (_this.rOptions.agent &&
                 _this.rOptions.agent instanceof http_1.Agent &&
-                _this.rOptions.customSocketId != null &&
-                // @ts-ignore
+                types_1.isPresent(_this.rOptions.customSocketId) &&
                 _this.rOptions.agent.getName) {
                 // @ts-ignore
                 logger("Request started with agent " + _this.req.toString);
@@ -272,7 +272,7 @@ var RequestHandler = /** @class */ (function () {
                         try {
                             if (typeof _this.proxyConfig.requestInterceptor === 'function') {
                                 var connectKey = _this.req.socket.remotePort + ":" + _this.req.socket.localPort;
-                                _this.proxyConfig.requestInterceptor.call(null, _this.rOptions, _this.req, _this.res, _this.context.ssl, (_a = contexts_1.default[connectKey]) === null || _a === void 0 ? void 0 : _a.connectRequest, next);
+                                _this.proxyConfig.requestInterceptor.call(null, _this.rOptions, _this.req, _this.res, _this.context.ssl, (_a = contexts_1.contexts[connectKey]) === null || _a === void 0 ? void 0 : _a.connectRequest, next);
                             }
                             else {
                                 resolve();

@@ -1,5 +1,5 @@
 import { CaPair } from '../types/ca-pair';
-export default class CertAndKeyContainer {
+export declare class CertAndKeyContainer {
     private queue;
     private readonly maxLength;
     private readonly getCertSocketTimeout;

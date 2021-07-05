@@ -55,7 +55,7 @@ var FakeServersCenter = /** @class */ (function () {
         this.maxFakeServersCount = maxLength;
         this.requestHandler = requestHandler;
         this.upgradeHandler = upgradeHandler;
-        this.certAndKeyContainer = new cert_and_key_container_1.default(maxLength, getCertSocketTimeout, caPair);
+        this.certAndKeyContainer = new cert_and_key_container_1.CertAndKeyContainer(maxLength, getCertSocketTimeout, caPair);
     }
     FakeServersCenter.prototype.addServerPromise = function (serverPromiseObj) {
         var _a;
@@ -79,7 +79,7 @@ var FakeServersCenter = /** @class */ (function () {
             // eslint-disable-next-line no-restricted-syntax
             for (var _i = 0, mappingHostNames_1 = mappingHostNames; _i < mappingHostNames_1.length; _i++) {
                 var DNSName = mappingHostNames_1[_i];
-                if (tls_utils_1.default.isMappingHostName(DNSName, hostname)) {
+                if (tls_utils_1.TlsUtils.isMappingHostName(DNSName, hostname)) {
                     this.reRankServer(i);
                     return serverPromiseObj_1.promise;
                 }
@@ -87,7 +87,7 @@ var FakeServersCenter = /** @class */ (function () {
         }
         // @ts-ignore
         var serverPromiseObj = {
-            mappingHostNames: [hostname],
+            mappingHostNames: [hostname], // temporary hostname
         };
         serverPromiseObj.promise = this.createNewServerPromise(hostname, port, serverPromiseObj);
         return this.addServerPromise(serverPromiseObj).promise;
@@ -130,7 +130,7 @@ var FakeServersCenter = /** @class */ (function () {
                             cert: cert,
                             key: key,
                             server: fakeServer,
-                            port: 0,
+                            port: 0, // if port === 0, should listen server's `listening` event.
                         };
                         // eslint-disable-next-line no-param-reassign
                         serverPromiseObj.serverObj = serverObj;
@@ -151,7 +151,7 @@ var FakeServersCenter = /** @class */ (function () {
                                 });
                                 fakeServer.on('listening', function () {
                                     // eslint-disable-next-line no-param-reassign
-                                    serverPromiseObj.mappingHostNames = tls_utils_1.default.getMappingHostNamesFormCert(certObj.cert);
+                                    serverPromiseObj.mappingHostNames = tls_utils_1.TlsUtils.getMappingHostNamesFormCert(certObj.cert);
                                     resolve(serverObj);
                                 });
                                 fakeServer.on('upgrade', function (req, socket, head) {

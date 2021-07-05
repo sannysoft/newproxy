@@ -7,7 +7,7 @@ import { CaConfig } from '../types/ca-config';
 import { CaPair } from '../types/ca-pair';
 import { caConfig } from '../common/ca-config';
 
-export default class TlsUtils {
+export class TlsUtils {
   public static createCA(commonName: string): CaPair {
     const keys = forge.pki.rsa.generateKeyPair(2046);
     const cert = forge.pki.createCertificate();
@@ -284,7 +284,7 @@ export default class TlsUtils {
         caKeyPath,
         create: false,
       };
-    } catch (err) {
+    } catch {
       const caObj = TlsUtils.createCA(caConfig.caName);
 
       const caCert = caObj.cert;
@@ -297,6 +297,7 @@ export default class TlsUtils {
       fs.writeFileSync(caCertPath, certPem);
       fs.writeFileSync(caKeyPath, keyPem);
     }
+
     return {
       caCertPath,
       caKeyPath,

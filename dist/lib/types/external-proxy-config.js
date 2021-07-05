@@ -3,8 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExternalProxyHelper = exports.isExternalProxyConfigObject = void 0;
 var url = require("url");
 var util_fns_1 = require("../common/util-fns");
+var types_1 = require("./types");
 function isExternalProxyConfigObject(obj) {
-    return typeof obj === 'object' && obj.host && obj.port;
+    return types_1.types(obj) && !!obj.host && !!obj.port;
 }
 exports.isExternalProxyConfigObject = isExternalProxyConfigObject;
 var ExternalProxyHelper = /** @class */ (function () {
@@ -13,12 +14,7 @@ var ExternalProxyHelper = /** @class */ (function () {
     }
     ExternalProxyHelper.prototype.getUrlObject = function () {
         var proxy;
-        if (typeof this.config === 'string') {
-            proxy = this.config;
-        }
-        else {
-            proxy = this.config.host + ":" + this.config.port;
-        }
+        proxy = types_1.isString(this.config) ? this.config : this.config.host + ":" + this.config.port;
         if (!proxy.startsWith('http:') && !proxy.startsWith('https:'))
             proxy = "http://" + proxy;
         return url.parse(proxy);

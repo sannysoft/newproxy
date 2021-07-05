@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var http = require("http");
 var chalk = require("chalk");
+var util_1 = require("util");
 var tls_utils_1 = require("./tls/tls-utils");
 var create_upgrade_handler_1 = require("./mitmproxy/create-upgrade-handler");
 var create_fake_server_center_1 = require("./mitmproxy/create-fake-server-center");
@@ -12,7 +13,6 @@ var logger_1 = require("./common/logger");
 var util_fns_1 = require("./common/util-fns");
 var context_1 = require("./types/contexts/context");
 var context_no_mitm_1 = require("./types/contexts/context-no-mitm");
-var util_1 = require("util");
 // eslint-disable-next-line import/no-default-export
 var NewProxy = /** @class */ (function () {
     function NewProxy(userProxyConfig) {
@@ -64,7 +64,7 @@ var NewProxy = /** @class */ (function () {
     NewProxy.setDefaultsForConfig = function (userConfig) {
         var caCertPath = userConfig.caCertPath, caKeyPath = userConfig.caKeyPath;
         if (!userConfig.caCertPath || !userConfig.caKeyPath) {
-            var rs = tls_utils_1.default.initCA(ca_config_1.caConfig.getDefaultCABasePath());
+            var rs = tls_utils_1.TlsUtils.initCA(ca_config_1.caConfig.getDefaultCABasePath());
             caCertPath = rs.caCertPath;
             caKeyPath = rs.caKeyPath;
             if (rs.create) {
@@ -118,8 +118,7 @@ var NewProxy = /** @class */ (function () {
                 });
                 // tunneling for https
                 _this.httpServer.on('connect', function (connectRequest, clientSocket, head) {
-                    clientSocket.on('error', function () {
-                    });
+                    clientSocket.on('error', function () { });
                     var context = new context_no_mitm_1.ContextNoMitm(connectRequest, clientSocket, head);
                     _this.connectHandler(context);
                 });

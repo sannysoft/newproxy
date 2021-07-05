@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.TlsUtils = void 0;
 var forge = require("node-forge");
 var mkdirp = require("mkdirp");
 var path = require("path");
@@ -257,7 +258,7 @@ var TlsUtils = /** @class */ (function () {
                 create: false,
             };
         }
-        catch (err) {
+        catch (_a) {
             var caObj = TlsUtils.createCA(ca_config_1.caConfig.caName);
             var caCert = caObj.cert;
             var cakey = caObj.key;
@@ -275,5 +276,5 @@ var TlsUtils = /** @class */ (function () {
     };
     return TlsUtils;
 }());
-exports.default = TlsUtils;
+exports.TlsUtils = TlsUtils;
 //# sourceMappingURL=tls-utils.js.map

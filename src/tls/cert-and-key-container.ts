@@ -1,12 +1,12 @@
 import * as http from 'http';
 import * as https from 'https';
 import { PeerCertificate, TLSSocket } from 'tls';
-import TlsUtils from './tls-utils';
+import { TlsUtils } from './tls-utils';
 import { CaPair } from '../types/ca-pair';
 import { CertPromise } from '../types/cert-promise';
 import { logError } from '../common/logger';
 
-export default class CertAndKeyContainer {
+export class CertAndKeyContainer {
   private queue: CertPromise[] = [];
 
   private readonly maxLength: number;

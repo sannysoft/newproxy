@@ -23,6 +23,8 @@ module.exports = {
     'import/prefer-default-export': 'off',
     'react/destructuring-assignment': 'off',
     'unicorn/no-useless-undefined': 'off',
+    'unicorn/no-null': 'off',
+    'unicorn/import-style': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
     '@typescript-eslint/no-inferrable-types': 'off',
 

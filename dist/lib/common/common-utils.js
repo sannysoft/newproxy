@@ -126,7 +126,7 @@ var CommonUtils = /** @class */ (function () {
             }
             else if (typeof externalProxy === 'function') {
                 var connectKey = req.socket.remotePort + ":" + req.socket.localPort;
-                externalProxyConfig = externalProxy(req, context.ssl, context.clientRes, (_a = contexts_1.default[connectKey]) === null || _a === void 0 ? void 0 : _a.connectRequest);
+                externalProxyConfig = externalProxy(req, context.ssl, context.clientRes, (_a = contexts_1.contexts[connectKey]) === null || _a === void 0 ? void 0 : _a.connectRequest);
                 // Check return type is proper config
                 if (externalProxyConfig &&
                     typeof externalProxyConfig !== 'string' &&

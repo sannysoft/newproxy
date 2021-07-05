@@ -1,8 +1,9 @@
 import * as http from 'http';
 import * as stream from 'stream';
 import * as chalk from 'chalk';
+import { promisify } from 'util';
 import { ProxyConfig, UserProxyConfig } from './types/proxy-config';
-import TlsUtils from './tls/tls-utils';
+import { TlsUtils } from './tls/tls-utils';
 import { createUpgradeHandler } from './mitmproxy/create-upgrade-handler';
 import { createFakeServerCenter } from './mitmproxy/create-fake-server-center';
 import { createConnectHandler } from './mitmproxy/create-connect-handler';
@@ -24,7 +25,7 @@ import { makeErr } from './common/util-fns';
 import { StatusFn } from './types/functions/status-fn';
 import { Context } from './types/contexts/context';
 import { ContextNoMitm } from './types/contexts/context-no-mitm';
-import { promisify } from 'util';
+
 // eslint-disable-next-line import/no-default-export
 export default class NewProxy {
   protected proxyConfig: ProxyConfig;
@@ -171,7 +172,7 @@ export default class NewProxy {
         this.httpServer.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
           // Plain HTTP request
           const context = new Context(req, res, false);
-          this.requestHandler!!(context);
+          this.requestHandler!(context);
         });
 
         // tunneling for https
@@ -180,7 +181,7 @@ export default class NewProxy {
           (connectRequest: http.IncomingMessage, clientSocket: stream.Duplex, head: Buffer) => {
             clientSocket.on('error', () => {});
             const context = new ContextNoMitm(connectRequest, clientSocket, head);
-            this.connectHandler!!(context);
+            this.connectHandler!(context);
           },
         );
 
@@ -189,7 +190,7 @@ export default class NewProxy {
           'upgrade',
           (req: http.IncomingMessage, socket: stream.Duplex, head: Buffer) => {
             const ssl = false;
-            this.upgradeHandler!!(req, socket, head, ssl);
+            this.upgradeHandler!(req, socket, head, ssl);
           },
         );
         resolve();

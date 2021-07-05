@@ -14,11 +14,11 @@ export function createUpgradeHandler(proxyConfig: ProxyConfig): UpgradeHandlerFn
     const clientOptions = CommonUtils.getOptionsFromRequest(context, proxyConfig);
     const proxyReq = (ssl ? https : http).request(clientOptions);
 
-    proxyReq.on('error', error => {
+    proxyReq.on('error', (error) => {
       logError(error);
     });
 
-    proxyReq.on('response', res => {
+    proxyReq.on('response', (res) => {
       // if upgrade event isn't going to happen, close the socket
       // @ts-ignore
       if (!res.upgrade) clientSocket.end();
@@ -42,6 +42,7 @@ export function createUpgradeHandler(proxyConfig: ProxyConfig): UpgradeHandlerFn
 
       clientSocket.write(
         `${Object.keys(proxyRes.headers)
+          // eslint-disable-next-line unicorn/no-reduce
           .reduce(
             (aggregator, key) => {
               const value = proxyRes.headers[key];
@@ -51,8 +52,8 @@ export function createUpgradeHandler(proxyConfig: ProxyConfig): UpgradeHandlerFn
                 return aggregator;
               }
 
-              for (let i = 0; i < value.length; i++) {
-                aggregator.push(`${key}: ${value[i]}`);
+              for (const element of value) {
+                aggregator.push(`${key}: ${element}`);
               }
               return aggregator;
             },

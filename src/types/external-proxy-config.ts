@@ -1,8 +1,6 @@
 import * as url from 'url';
 import { isNullOrUndefined, makeErr } from '../common/util-fns';
-
-export type ExternalProxyConfig = ExternalProxyConfigObject | string;
-export type ExternalProxyConfigOrNull = ExternalProxyConfig | undefined;
+import { isString, types } from './types';
 
 export interface ExternalProxyConfigObject {
   host: string;
@@ -11,12 +9,15 @@ export interface ExternalProxyConfigObject {
   password?: string;
 }
 
-export function isExternalProxyConfigObject(obj: any): obj is ExternalProxyConfigObject {
-  return typeof obj === 'object' && obj.host && obj.port;
+export type ExternalProxyConfig = ExternalProxyConfigObject | string;
+export type ExternalProxyConfigOrNull = ExternalProxyConfig | undefined;
+
+export function isExternalProxyConfigObject(obj: unknown): obj is ExternalProxyConfigObject {
+  return types(obj) && !!obj.host && !!obj.port;
 }
 
 export class ExternalProxyHelper {
-  private readonly config: ExternalProxyConfig;
+  private readonly config: ExternalProxyConfig | string;
 
   public constructor(config: ExternalProxyConfig) {
     this.config = config;
@@ -25,11 +26,7 @@ export class ExternalProxyHelper {
   public getUrlObject(): url.UrlWithStringQuery {
     let proxy: string;
 
-    if (typeof this.config === 'string') {
-      proxy = this.config;
-    } else {
-      proxy = `${this.config.host}:${this.config.port}`;
-    }
+    proxy = isString(this.config) ? this.config : `${this.config.host}:${this.config.port}`;
 
     if (!proxy.startsWith('http:') && !proxy.startsWith('https:')) proxy = `http://${proxy}`;
 

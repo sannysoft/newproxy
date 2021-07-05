@@ -7,7 +7,7 @@ import {
   ExternalProxyHelper,
   isExternalProxyConfigObject,
 } from '../types/external-proxy-config';
-import contexts from './contexts';
+import { contexts } from './contexts';
 import { TunnelingAgent } from './tunneling-agent';
 import { makeErr } from './util-fns';
 import { Context } from '../types/contexts/context';

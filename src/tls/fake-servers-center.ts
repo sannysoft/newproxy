@@ -3,8 +3,8 @@ import * as forge from 'node-forge';
 import * as tls from 'tls';
 import { AddressInfo } from 'net';
 import debug from 'debug';
-import TlsUtils from './tls-utils';
-import CertAndKeyContainer from './cert-and-key-container';
+import { TlsUtils } from './tls-utils';
+import { CertAndKeyContainer } from './cert-and-key-container';
 import { CaPair } from '../types/ca-pair';
 import { ServerObject } from '../types/server-object';
 import { ServerObjectPromise } from '../types/server-object-promise';
@@ -118,7 +118,7 @@ export class FakeServersCenter {
     // eslint-disable-next-line no-param-reassign
     serverPromiseObj.serverObj = serverObj;
 
-    return new Promise<ServerObject>(resolve => {
+    return new Promise<ServerObject>((resolve) => {
       fakeServer.listen(0, () => {
         const address = fakeServer.address() as AddressInfo;
         serverObj.port = address.port;
@@ -131,7 +131,7 @@ export class FakeServersCenter {
         this.requestHandler(context);
       });
 
-      fakeServer.on('error', e => {
+      fakeServer.on('error', (e) => {
         logger(`Error by fake-server: ${e.toString()}`);
         logError(e);
       });

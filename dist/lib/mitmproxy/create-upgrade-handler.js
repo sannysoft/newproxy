@@ -73,14 +73,16 @@ function createUpgradeHandler(proxyConfig) {
                     if (proxyHead && proxyHead.length > 0)
                         proxySocket.unshift(proxyHead);
                     clientSocket.write(Object.keys(proxyRes.headers)
+                        // eslint-disable-next-line unicorn/no-reduce
                         .reduce(function (aggregator, key) {
                         var value = proxyRes.headers[key];
                         if (!Array.isArray(value)) {
                             aggregator.push(key + ": " + value);
                             return aggregator;
                         }
-                        for (var i = 0; i < value.length; i++) {
-                            aggregator.push(key + ": " + value[i]);
+                        for (var _i = 0, value_1 = value; _i < value_1.length; _i++) {
+                            var element = value_1[_i];
+                            aggregator.push(key + ": " + element);
                         }
                         return aggregator;
                     }, ['HTTP/1.1 101 Switching Protocols'])

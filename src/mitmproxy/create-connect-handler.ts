@@ -1,7 +1,7 @@
 import * as url from 'url';
 import * as net from 'net';
 import { FakeServersCenter } from '../tls/fake-servers-center';
-import contexts from '../common/contexts';
+import { contexts } from '../common/contexts';
 import { ExtendedNetSocket } from '../types/extended-net-socket';
 import { ConnectHandlerFn } from '../types/functions/connect-handler-fn';
 import { ServerObject } from '../types/server-object';
@@ -42,16 +42,10 @@ export function createConnectHandler(
     const serverPort = Number(srvUrl.port || 443);
 
     if (!interceptSsl) {
-      let externalProxy: ExternalProxyConfigOrNull | string;
-      if (
-        proxyConfig.externalProxyNoMitm &&
-        typeof proxyConfig.externalProxyNoMitm === 'function'
-      ) {
-        externalProxy = proxyConfig.externalProxyNoMitm(
-          context.connectRequest,
-          context.clientSocket,
-        );
-      } else externalProxy = proxyConfig.externalProxyNoMitm;
+      const externalProxy: ExternalProxyConfigOrNull | string =
+        proxyConfig.externalProxyNoMitm && typeof proxyConfig.externalProxyNoMitm === 'function'
+          ? proxyConfig.externalProxyNoMitm(context.connectRequest, context.clientSocket)
+          : proxyConfig.externalProxyNoMitm;
 
       context.markStart();
       context.clientSocket.on('close', () => {
@@ -129,7 +123,7 @@ function connectNoMitmExternalProxy(
       proxySocket.write(
         `CONNECT ${hostname}:${port} HTTP/${context.connectRequest.httpVersion}\r\n`,
       );
-      ['host', 'user-agent', 'proxy-connection'].forEach(name => {
+      ['host', 'user-agent', 'proxy-connection'].forEach((name) => {
         if (name in context.connectRequest.headers) {
           proxySocket.write(`${name}: ${context.connectRequest.headers[name]}\r\n`);
         }

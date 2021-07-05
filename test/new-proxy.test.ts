@@ -1,7 +1,7 @@
 import NewProxy from '../src/new-proxy';
 
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -15,19 +15,22 @@ describe('Proxy test', () => {
   });
 
   it('', async () => {
-    // @ts-ignore
     const proxy = new NewProxy()
       .port(8800)
+      .log(true)
       .sslMitm(() => false)
+      .externalProxy({
+        host: '127.0.0.1',
+        port: 8888,
+      })
       .externalProxyNoMitm(() => {
         return {
-          host: 'http://127.0.0.1:8888',
-          username: 'sanny',
-          password: '123',
+          host: '127.0.0.1',
+          port: 8888,
         };
       });
 
-    proxy.run();
+    await proxy.run();
     await sleep(100000);
   });
 });

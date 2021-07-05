@@ -3,6 +3,4 @@
 // around.
 import { ContextNoMitm } from '../types/contexts/context-no-mitm';
 
-const contexts: { [key: string]: ContextNoMitm } = {};
-
-export default contexts;
+export const contexts: { [key: string]: ContextNoMitm } = {};

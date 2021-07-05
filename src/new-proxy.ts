@@ -24,7 +24,7 @@ import { makeErr } from './common/util-fns';
 import { StatusFn } from './types/functions/status-fn';
 import { Context } from './types/contexts/context';
 import { ContextNoMitm } from './types/contexts/context-no-mitm';
-
+import { promisify } from 'util';
 // eslint-disable-next-line import/no-default-export
 export default class NewProxy {
   protected proxyConfig: ProxyConfig;
@@ -152,47 +152,52 @@ export default class NewProxy {
     this.connectHandler = createConnectHandler(this.proxyConfig, this.fakeServersCenter);
   }
 
-  public run(): void {
+  public run(): Promise<void> {
     // Don't reject unauthorized
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
     this.setup();
 
-    this.httpServer.listen(this.proxyConfig.port, () => {
-      log(`NewProxy is listening on port ${this.proxyConfig.port}`, chalk.green);
-
-      this.httpServer.on('error', (e: Error) => {
-        logError(e);
+    return new Promise((resolve, reject) => {
+      this.httpServer.once('error', (error: Error) => {
+        reject(error);
       });
+      this.httpServer.listen(this.proxyConfig.port, () => {
+        log(`NewProxy is listening on port ${this.proxyConfig.port}`, chalk.green);
+        this.httpServer.on('error', (e: Error) => {
+          logError(e);
+        });
 
-      this.httpServer.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
-        // Plain HTTP request
-        const context = new Context(req, res, false);
-        this.requestHandler!!(context);
+        this.httpServer.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
+          // Plain HTTP request
+          const context = new Context(req, res, false);
+          this.requestHandler!!(context);
+        });
+
+        // tunneling for https
+        this.httpServer.on(
+          'connect',
+          (connectRequest: http.IncomingMessage, clientSocket: stream.Duplex, head: Buffer) => {
+            clientSocket.on('error', () => {});
+            const context = new ContextNoMitm(connectRequest, clientSocket, head);
+            this.connectHandler!!(context);
+          },
+        );
+
+        // TODO: handle WebSocket
+        this.httpServer.on(
+          'upgrade',
+          (req: http.IncomingMessage, socket: stream.Duplex, head: Buffer) => {
+            const ssl = false;
+            this.upgradeHandler!!(req, socket, head, ssl);
+          },
+        );
+        resolve();
       });
-
-      // tunneling for https
-      this.httpServer.on(
-        'connect',
-        (connectRequest: http.IncomingMessage, clientSocket: stream.Duplex, head: Buffer) => {
-          clientSocket.on('error', () => {});
-          const context = new ContextNoMitm(connectRequest, clientSocket, head);
-          this.connectHandler!!(context);
-        },
-      );
-
-      // TODO: handle WebSocket
-      this.httpServer.on(
-        'upgrade',
-        (req: http.IncomingMessage, socket: stream.Duplex, head: Buffer) => {
-          const ssl = false;
-          this.upgradeHandler!!(req, socket, head, ssl);
-        },
-      );
     });
   }
 
-  public stop(): void {
-    this.httpServer.close(() => {});
+  public stop(): Promise<void> {
+    return promisify(this.httpServer.close).call(this.httpServer);
   }
 }

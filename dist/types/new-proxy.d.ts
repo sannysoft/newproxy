@@ -29,6 +29,6 @@ export default class NewProxy {
     externalProxyNoMitm(value: ExternalProxyConfig | ExternalProxyNoMitmFn | undefined): NewProxy;
     private static setDefaultsForConfig;
     setup(): void;
-    run(): void;
-    stop(): void;
+    run(): Promise<void>;
+    stop(): Promise<void>;
 }

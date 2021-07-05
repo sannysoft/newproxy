@@ -12,6 +12,7 @@ var logger_1 = require("./common/logger");
 var util_fns_1 = require("./common/util-fns");
 var context_1 = require("./types/contexts/context");
 var context_no_mitm_1 = require("./types/contexts/context-no-mitm");
+var util_1 = require("util");
 // eslint-disable-next-line import/no-default-export
 var NewProxy = /** @class */ (function () {
     function NewProxy(userProxyConfig) {
@@ -101,31 +102,38 @@ var NewProxy = /** @class */ (function () {
         // Don't reject unauthorized
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
         this.setup();
-        this.httpServer.listen(this.proxyConfig.port, function () {
-            logger_1.log("NewProxy is listening on port " + _this.proxyConfig.port, chalk.green);
-            _this.httpServer.on('error', function (e) {
-                logger_1.logError(e);
+        return new Promise(function (resolve, reject) {
+            _this.httpServer.once('error', function (error) {
+                reject(error);
             });
-            _this.httpServer.on('request', function (req, res) {
-                // Plain HTTP request
-                var context = new context_1.Context(req, res, false);
-                _this.requestHandler(context);
-            });
-            // tunneling for https
-            _this.httpServer.on('connect', function (connectRequest, clientSocket, head) {
-                clientSocket.on('error', function () { });
-                var context = new context_no_mitm_1.ContextNoMitm(connectRequest, clientSocket, head);
-                _this.connectHandler(context);
-            });
-            // TODO: handle WebSocket
-            _this.httpServer.on('upgrade', function (req, socket, head) {
-                var ssl = false;
-                _this.upgradeHandler(req, socket, head, ssl);
+            _this.httpServer.listen(_this.proxyConfig.port, function () {
+                logger_1.log("NewProxy is listening on port " + _this.proxyConfig.port, chalk.green);
+                _this.httpServer.on('error', function (e) {
+                    logger_1.logError(e);
+                });
+                _this.httpServer.on('request', function (req, res) {
+                    // Plain HTTP request
+                    var context = new context_1.Context(req, res, false);
+                    _this.requestHandler(context);
+                });
+                // tunneling for https
+                _this.httpServer.on('connect', function (connectRequest, clientSocket, head) {
+                    clientSocket.on('error', function () {
+                    });
+                    var context = new context_no_mitm_1.ContextNoMitm(connectRequest, clientSocket, head);
+                    _this.connectHandler(context);
+                });
+                // TODO: handle WebSocket
+                _this.httpServer.on('upgrade', function (req, socket, head) {
+                    var ssl = false;
+                    _this.upgradeHandler(req, socket, head, ssl);
+                });
+                resolve();
             });
         });
     };
     NewProxy.prototype.stop = function () {
-        this.httpServer.close(function () { });
+        return util_1.promisify(this.httpServer.close).call(this.httpServer);
     };
     return NewProxy;
 }());

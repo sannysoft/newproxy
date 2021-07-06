@@ -1,6 +1,6 @@
 {
   "name": "newproxy",
-  "version": "1.5.7",
+  "version": "1.5.8",
   "description": "",
   "keywords": [],
   "main": "dist/lib/new-proxy.js",

@@ -17,6 +17,7 @@ var context_no_mitm_1 = require("./types/contexts/context-no-mitm");
 var NewProxy = /** @class */ (function () {
     function NewProxy(userProxyConfig) {
         if (userProxyConfig === void 0) { userProxyConfig = {}; }
+        this.serverSockets = new Set();
         this.proxyConfig = NewProxy.setDefaultsForConfig(userProxyConfig);
         this.httpServer = new http.Server();
     }
@@ -122,6 +123,12 @@ var NewProxy = /** @class */ (function () {
                     var context = new context_no_mitm_1.ContextNoMitm(connectRequest, clientSocket, head);
                     _this.connectHandler(context);
                 });
+                _this.httpServer.on('connection', function (socket) {
+                    _this.serverSockets.add(socket);
+                    socket.on('close', function () {
+                        _this.serverSockets.delete(socket);
+                    });
+                });
                 // TODO: handle WebSocket
                 _this.httpServer.on('upgrade', function (req, socket, head) {
                     var ssl = false;
@@ -132,6 +139,11 @@ var NewProxy = /** @class */ (function () {
         });
     };
     NewProxy.prototype.stop = function () {
+        // Destroy all open sockets first
+        this.serverSockets.forEach(function (socket) {
+            socket.destroy();
+        });
+        this.serverSockets = new Set();
         return util_1.promisify(this.httpServer.close).call(this.httpServer);
     };
     return NewProxy;

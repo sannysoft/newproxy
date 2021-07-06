@@ -25,6 +25,7 @@ import { makeErr } from './common/util-fns';
 import { StatusFn } from './types/functions/status-fn';
 import { Context } from './types/contexts/context';
 import { ContextNoMitm } from './types/contexts/context-no-mitm';
+import { Socket } from 'net';
 
 // eslint-disable-next-line import/no-default-export
 export default class NewProxy {
@@ -39,6 +40,8 @@ export default class NewProxy {
   private fakeServersCenter?: FakeServersCenter;
 
   private connectHandler?: ConnectHandlerFn;
+
+  private serverSockets = new Set<Socket>();
 
   public constructor(userProxyConfig: UserProxyConfig = {}) {
     this.proxyConfig = NewProxy.setDefaultsForConfig(userProxyConfig);
@@ -185,6 +188,13 @@ export default class NewProxy {
           },
         );
 
+        this.httpServer.on('connection', (socket: Socket) => {
+          this.serverSockets.add(socket);
+          socket.on('close', () => {
+            this.serverSockets.delete(socket);
+          });
+        });
+
         // TODO: handle WebSocket
         this.httpServer.on(
           'upgrade',
@@ -199,6 +209,11 @@ export default class NewProxy {
   }
 
   public stop(): Promise<void> {
+    // Destroy all open sockets first
+    this.serverSockets.forEach((socket) => {
+      socket.destroy();
+    });
+    this.serverSockets = new Set();
     return promisify(this.httpServer.close).call(this.httpServer);
   }
 }

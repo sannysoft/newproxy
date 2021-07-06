@@ -1,7 +1,7 @@
 {
   "name": "newproxy",
-  "version": "1.5.8",
-  "description": "",
+  "version": "1.5.9",
+  "description": "HTTP/HTTPS Proxy server with overrides & MITM support",
   "keywords": [],
   "main": "dist/lib/new-proxy.js",
   "module": "dist/lib/new-proxy.js",
@@ -9,10 +9,11 @@
   "files": [
     "dist"
   ],
-  "author": "sannysoft <sannysoft@gmail.com>",
+  "author": "Alexander Romanov <sannysoft@gmail.com>",
+  "homepage": "https://github.com/sannysoft/newproxy#readme",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "git+https://github.com/sannysoft/newproxy.git"
   },
   "license": "MIT",
   "engines": {

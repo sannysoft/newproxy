@@ -195,13 +195,11 @@ export class TlsUtils {
     cert.setSubject(attrs);
     cert.setIssuer(caPair.cert.subject.attributes);
 
-    const subjectAltNames = originCertificate.subjectaltname.split(', ').map((name) => {
-      return {
-        // 2 is DNS type
-        type: 2,
-        value: name.replace('DNS:', '').trim(),
-      };
-    });
+    const subjectAltNames = originCertificate.subjectaltname.split(', ').map((name) => ({
+      // 2 is DNS type
+      type: 2,
+      value: name.replace('DNS:', '').trim(),
+    }));
 
     cert.setExtensions([
       {
@@ -280,8 +278,8 @@ export class TlsUtils {
 
       // has exist
       return {
-        caCertPath,
-        caKeyPath,
+        caCertPath: caCertPath,
+        caKeyPath: caKeyPath,
         create: false,
       };
     } catch {
@@ -299,8 +297,8 @@ export class TlsUtils {
     }
 
     return {
-      caCertPath,
-      caKeyPath,
+      caCertPath: caCertPath,
+      caKeyPath: caKeyPath,
       create: true,
     };
   }

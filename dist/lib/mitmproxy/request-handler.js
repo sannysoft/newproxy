@@ -211,21 +211,7 @@ var RequestHandler = /** @class */ (function () {
         return new Promise(function (resolve, reject) {
             _this.rOptions.host = _this.rOptions.hostname || _this.rOptions.host || 'localhost';
             // use the bind socket for NTLM
-            if (_this.rOptions.agent &&
-                _this.rOptions.agent instanceof http_1.Agent &&
-                types_1.isPresent(_this.rOptions.customSocketId) &&
-                _this.rOptions.agent.getName) {
-                // @ts-ignore
-                logger("Request started with agent " + _this.req.toString);
-                var socketName = _this.rOptions.agent.getName(_this.rOptions);
-                var bindingSocket = _this.rOptions.agent.sockets[socketName];
-                if (bindingSocket && bindingSocket.length > 0) {
-                    bindingSocket[0].once('free', onFree);
-                    return;
-                }
-            }
-            onFree();
-            function onFree() {
+            var onFree = function () {
                 self.proxyReq = (self.rOptions.protocol === 'https:' ? https : http).request(self.rOptions, function (proxyRes) {
                     resolve(proxyRes);
                 });
@@ -257,56 +243,62 @@ var RequestHandler = /** @class */ (function () {
                     (_a = self.proxyReq) === null || _a === void 0 ? void 0 : _a.abort();
                 });
                 self.req.pipe(self.proxyReq);
+            };
+            if (_this.rOptions.agent &&
+                _this.rOptions.agent instanceof http_1.Agent &&
+                types_1.isPresent(_this.rOptions.customSocketId) &&
+                _this.rOptions.agent.getName) {
+                // @ts-ignore
+                logger("Request started with agent " + _this.req.toString);
+                var socketName = _this.rOptions.agent.getName(_this.rOptions);
+                var bindingSocket = _this.rOptions.agent.sockets[socketName];
+                if (bindingSocket && bindingSocket.length > 0) {
+                    bindingSocket[0].once('free', onFree);
+                    return;
+                }
             }
+            onFree();
         });
     };
     RequestHandler.prototype.interceptRequest = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var _this = this;
-            return __generator(this, function (_a) {
-                return [2 /*return*/, new Promise(function (resolve, reject) {
-                        var _a;
-                        var next = function () {
-                            resolve();
-                        };
-                        try {
-                            if (typeof _this.proxyConfig.requestInterceptor === 'function') {
-                                var connectKey = _this.req.socket.remotePort + ":" + _this.req.socket.localPort;
-                                _this.proxyConfig.requestInterceptor.call(null, _this.rOptions, _this.req, _this.res, _this.context.ssl, (_a = contexts_1.contexts[connectKey]) === null || _a === void 0 ? void 0 : _a.connectRequest, next);
-                            }
-                            else {
-                                resolve();
-                            }
-                        }
-                        catch (error) {
-                            reject(error);
-                        }
-                    })];
-            });
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            var _a;
+            var next = function () {
+                resolve();
+            };
+            try {
+                if (typeof _this.proxyConfig.requestInterceptor === 'function') {
+                    var connectKey = _this.req.socket.remotePort + ":" + _this.req.socket.localPort;
+                    _this.proxyConfig.requestInterceptor.call(null, _this.rOptions, _this.req, _this.res, _this.context.ssl, (_a = contexts_1.contexts[connectKey]) === null || _a === void 0 ? void 0 : _a.connectRequest, next);
+                }
+                else {
+                    resolve();
+                }
+            }
+            catch (error) {
+                reject(error);
+            }
         });
     };
     RequestHandler.prototype.interceptResponse = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var _this = this;
-            return __generator(this, function (_a) {
-                return [2 /*return*/, new Promise(function (resolve, reject) {
-                        var _a, _b;
-                        var next = function () {
-                            resolve();
-                        };
-                        try {
-                            if (typeof _this.proxyConfig.responseInterceptor === 'function') {
-                                _this.proxyConfig.responseInterceptor.call(null, _this.req, _this.res, (_a = _this.proxyReq) !== null && _a !== void 0 ? _a : util_fns_1.makeErr('No proxyReq'), (_b = _this.proxyRes) !== null && _b !== void 0 ? _b : util_fns_1.makeErr('No proxyRes'), _this.context.ssl, next);
-                            }
-                            else {
-                                resolve();
-                            }
-                        }
-                        catch (error) {
-                            reject(error);
-                        }
-                    })];
-            });
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            var _a, _b;
+            var next = function () {
+                resolve();
+            };
+            try {
+                if (typeof _this.proxyConfig.responseInterceptor === 'function') {
+                    _this.proxyConfig.responseInterceptor.call(null, _this.req, _this.res, (_a = _this.proxyReq) !== null && _a !== void 0 ? _a : util_fns_1.makeErr('No proxyReq'), (_b = _this.proxyRes) !== null && _b !== void 0 ? _b : util_fns_1.makeErr('No proxyRes'), _this.context.ssl, next);
+                }
+                else {
+                    resolve();
+                }
+            }
+            catch (error) {
+                reject(error);
+            }
         });
     };
     RequestHandler.prototype.setKeepAlive = function () {

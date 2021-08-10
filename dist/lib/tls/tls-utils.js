@@ -178,13 +178,11 @@ var TlsUtils = /** @class */ (function () {
         });
         cert.setSubject(attrs);
         cert.setIssuer(caPair.cert.subject.attributes);
-        var subjectAltNames = originCertificate.subjectaltname.split(', ').map(function (name) {
-            return {
-                // 2 is DNS type
-                type: 2,
-                value: name.replace('DNS:', '').trim(),
-            };
-        });
+        var subjectAltNames = originCertificate.subjectaltname.split(', ').map(function (name) { return ({
+            // 2 is DNS type
+            type: 2,
+            value: name.replace('DNS:', '').trim(),
+        }); });
         cert.setExtensions([
             {
                 name: 'basicConstraints',

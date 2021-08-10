@@ -44,66 +44,6 @@ var logger_1 = require("../common/logger");
 var external_proxy_config_1 = require("../types/external-proxy-config");
 var util_fns_1 = require("../common/util-fns");
 var localIP = '127.0.0.1';
-function createConnectHandler(proxyConfig, fakeServerCenter) {
-    // return
-    return function connectHandler(context) {
-        var _this = this;
-        var _a;
-        var srvUrl = url.parse("https://" + context.connectRequest.url);
-        var interceptSsl = false;
-        try {
-            interceptSsl =
-                (typeof proxyConfig.sslMitm === 'function' &&
-                    proxyConfig.sslMitm.call(null, context.connectRequest, context.clientSocket, context.head)) ||
-                    proxyConfig.sslMitm === true;
-        }
-        catch (error) {
-            logger_1.logError(error, 'Error at sslMitm function');
-        }
-        if (!context.clientSocket.writable)
-            return;
-        var serverHostname = (_a = srvUrl.hostname) !== null && _a !== void 0 ? _a : util_fns_1.makeErr('No hostname set for https request');
-        var serverPort = Number(srvUrl.port || 443);
-        if (!interceptSsl) {
-            var externalProxy = proxyConfig.externalProxyNoMitm && typeof proxyConfig.externalProxyNoMitm === 'function'
-                ? proxyConfig.externalProxyNoMitm(context.connectRequest, context.clientSocket)
-                : proxyConfig.externalProxyNoMitm;
-            context.markStart();
-            context.clientSocket.on('close', function () {
-                if (proxyConfig.statusNoMitmFn) {
-                    var statusData = context.getStatusData();
-                    proxyConfig.statusNoMitmFn(statusData);
-                }
-            });
-            if (externalProxy) {
-                connectNoMitmExternalProxy(new external_proxy_config_1.ExternalProxyHelper(externalProxy), context, serverHostname, serverPort);
-                return;
-            }
-            connect(context, serverHostname, serverPort);
-            return;
-        }
-        (function () { return __awaiter(_this, void 0, void 0, function () {
-            var serverObject, error_1;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        _a.trys.push([0, 2, , 3]);
-                        return [4 /*yield*/, fakeServerCenter.getServerPromise(serverHostname, serverPort)];
-                    case 1:
-                        serverObject = _a.sent();
-                        connect(context, localIP, serverObject.port);
-                        return [3 /*break*/, 3];
-                    case 2:
-                        error_1 = _a.sent();
-                        logger_1.logError(error_1);
-                        return [3 /*break*/, 3];
-                    case 3: return [2 /*return*/];
-                }
-            });
-        }); })();
-    };
-}
-exports.createConnectHandler = createConnectHandler;
 function connect(context, hostname, port) {
     // tunneling https
     var proxySocket = net.connect(port, hostname, function () {
@@ -147,4 +87,64 @@ function connectNoMitmExternalProxy(proxyHelper, context, hostname, port) {
     });
     return proxySocket;
 }
+function createConnectHandler(proxyConfig, fakeServerCenter) {
+    // return
+    return function connectHandler(context) {
+        var _this = this;
+        var _a;
+        var srvUrl = url.parse("https://" + context.connectRequest.url);
+        var interceptSsl = false;
+        try {
+            interceptSsl =
+                (typeof proxyConfig.sslMitm === 'function' &&
+                    proxyConfig.sslMitm.call(null, context.connectRequest, context.clientSocket, context.head)) ||
+                    proxyConfig.sslMitm === true;
+        }
+        catch (error) {
+            logger_1.logError(error, 'Error at sslMitm function');
+        }
+        if (!context.clientSocket.writable)
+            return;
+        var serverHostname = (_a = srvUrl.hostname) !== null && _a !== void 0 ? _a : util_fns_1.makeErr('No hostname set for https request');
+        var serverPort = Number(srvUrl.port || 443);
+        if (!interceptSsl) {
+            var externalProxy = proxyConfig.externalProxyNoMitm && typeof proxyConfig.externalProxyNoMitm === 'function'
+                ? proxyConfig.externalProxyNoMitm(context.connectRequest, context.clientSocket)
+                : proxyConfig.externalProxyNoMitm;
+            context.markStart();
+            context.clientSocket.on('close', function () {
+                if (proxyConfig.statusNoMitmFn) {
+                    var statusData = context.getStatusData();
+                    proxyConfig.statusNoMitmFn(statusData);
+                }
+            });
+            if (externalProxy) {
+                connectNoMitmExternalProxy(new external_proxy_config_1.ExternalProxyHelper(externalProxy), context, serverHostname, serverPort);
+                return;
+            }
+            connect(context, serverHostname, serverPort);
+            return;
+        }
+        void (function () { return __awaiter(_this, void 0, void 0, function () {
+            var serverObject, error_1;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, fakeServerCenter.getServerPromise(serverHostname, serverPort)];
+                    case 1:
+                        serverObject = _a.sent();
+                        connect(context, localIP, serverObject.port);
+                        return [3 /*break*/, 3];
+                    case 2:
+                        error_1 = _a.sent();
+                        logger_1.logError(error_1);
+                        return [3 /*break*/, 3];
+                    case 3: return [2 /*return*/];
+                }
+            });
+        }); })();
+    };
+}
+exports.createConnectHandler = createConnectHandler;
 //# sourceMappingURL=create-connect-handler.js.map

@@ -2,53 +2,83 @@ module.exports = {
   parserOptions: {
     project: 'tsconfig.json',
   },
-  plugins: ['@typescript-eslint', 'eslint-comments', 'jest', 'promise', 'unicorn'],
-  extends: [
-    'airbnb-typescript/base',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:eslint-comments/recommended',
-    'plugin:jest/recommended',
-    'plugin:promise/recommended',
-    'plugin:unicorn/recommended',
-    'prettier',
-    'prettier/react',
-    'prettier/@typescript-eslint',
-  ],
+  plugins: ['@typescript-eslint', 'jest', 'unicorn', 'prettier'],
+  extends: ['airbnb-typescript/base', 'prettier'],
   env: {
     node: true,
     browser: false,
     jest: true,
   },
   rules: {
-    'import/prefer-default-export': 'off',
-    'react/destructuring-assignment': 'off',
-    'unicorn/no-useless-undefined': 'off',
-    'unicorn/no-null': 'off',
-    'unicorn/import-style': 'off',
-    '@typescript-eslint/ban-ts-comment': 'off',
+    'prettier/prettier': 'error',
+    'arrow-body-style': 'off',
+    'prefer-arrow-callback': 'off',
+    '@typescript-eslint/explicit-function-return-type': ['error'],
     '@typescript-eslint/no-inferrable-types': 'off',
-
-    'no-use-before-define': ['error', { functions: false, classes: true, variables: true }],
-    // Makes no sense to allow type inferrence for expression parameters, but require typing the response
-    '@typescript-eslint/explicit-function-return-type': [
+    '@typescript-eslint/no-unused-vars': 'off',
+    '@typescript-eslint/ban-ts-comment': 'off',
+    '@typescript-eslint/no-unused-vars-experimental': 'warn',
+    '@typescript-eslint/dot-notation': [
       'error',
-      { allowExpressions: true, allowTypedFunctionExpressions: true },
+      {
+        allowKeywords: true,
+        allowIndexSignaturePropertyAccess: true,
+        allowPrivateClassPropertyAccess: true,
+        allowProtectedClassPropertyAccess: true,
+      },
     ],
-    '@typescript-eslint/no-use-before-define': [
-      'error',
-      { functions: false, classes: true, variables: true, typedefs: true },
-    ],
-    // Common abbreviations are known and readable
-    'unicorn/prevent-abbreviations': 'off',
-
-    '@typescript-eslint/no-explicit-any': 'off',
-    'no-console': 'off',
-
-    'import/no-default-export': 'off',
+    'import/prefer-default-export': 'off',
+    'import/no-default-export': 'error',
+    'no-underscore-dangle': 'off',
     'prefer-destructuring': 'off',
-    'object-shorthand': 'off',
+    'import/no-cycle': 'warn',
+    'no-eval': 'warn',
+    'max-len': [
+      'error',
+      {
+        code: 130,
+        ignoreTrailingComments: true,
+        ignoreStrings: true,
+        ignoreTemplateLiterals: true,
+        ignoreRegExpLiterals: true,
+        ignoreUrls: true,
+      },
+    ],
+    'class-methods-use-this': 'warn',
+    'no-continue': 'warn',
+    'no-await-in-loop': 'off',
     'no-plusplus': 'off',
-    'dot-notation': 'off',
-    '@typescript-eslint/no-non-null-assertion': 'off',
+    'object-shorthand': ['error', 'never'],
+    'no-return-await': 'off',
+    '@typescript-eslint/return-await': ['error', 'in-try-catch'],
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: 'ForInStatement',
+        message:
+          'for..in loops iterate over the entire prototype chain, which is virtually never what you want. Use Object.{keys,values,entries}, and iterate over the resulting array.',
+      },
+      {
+        selector: 'LabeledStatement',
+        message:
+          'Labels are a form of GOTO; using them makes code confusing and hard to maintain and understand.',
+      },
+      {
+        selector: 'WithStatement',
+        message:
+          '`with` is disallowed in strict mode because it makes code impossible to predict and optimize.',
+      },
+    ],
+    'space-before-function-paren': [
+      'error',
+      {
+        anonymous: 'always',
+        named: 'never',
+        asyncArrow: 'always',
+      },
+    ],
+    '@typescript-eslint/no-floating-promises': 'error',
+    'require-await': 'error',
+    'no-void': 'off',
   },
 };

@@ -8,9 +8,11 @@ export declare class FakeServersCenter {
     private certAndKeyContainer;
     private readonly requestHandler;
     private readonly upgradeHandler;
+    private fakeServers;
     constructor(maxLength: number | undefined, requestHandler: RequestHandlerFn, upgradeHandler: UpgradeHandlerFn, caPair: CaPair, getCertSocketTimeout: number);
     private addServerPromise;
     getServerPromise(hostname: string, port: number): Promise<ServerObject>;
     private createNewServerPromise;
     private reRankServer;
+    close(): Promise<void>;
 }

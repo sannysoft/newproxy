@@ -3,6 +3,7 @@ import * as forge from 'node-forge';
 import * as tls from 'tls';
 import { AddressInfo } from 'net';
 import debug from 'debug';
+import { promisify } from 'util';
 import { TlsUtils } from './tls-utils';
 import { CertAndKeyContainer } from './cert-and-key-container';
 import { CaPair } from '../types/ca-pair';
@@ -27,6 +28,8 @@ export class FakeServersCenter {
   private readonly requestHandler: RequestHandlerFn;
 
   private readonly upgradeHandler: UpgradeHandlerFn;
+
+  private fakeServers: Set<https.Server> = new Set();
 
   public constructor(
     maxLength = 100,
@@ -94,8 +97,8 @@ export class FakeServersCenter {
     const fakeServer = new https.Server({
       key: keyPem,
       cert: certPem,
-      SNICallback: (sniHostname, done) => {
-        (async () => {
+      SNICallback: (sniHostname, done): void => {
+        void (async (): Promise<void> => {
           const sniCertObj = await this.certAndKeyContainer.getCertPromise(sniHostname, port);
           done(
             null,
@@ -107,6 +110,8 @@ export class FakeServersCenter {
         })();
       },
     });
+
+    this.fakeServers.add(fakeServer);
 
     const serverObj: ServerObject = {
       cert: cert,
@@ -152,5 +157,11 @@ export class FakeServersCenter {
   private reRankServer(index: number): void {
     // index ==> queue foot
     this.queue.push(this.queue.splice(index, 1)[0]);
+  }
+
+  public async close(): Promise<void> {
+    for (const server of Array.from(this.fakeServers)) {
+      await promisify(server.close).call(server);
+    }
   }
 }

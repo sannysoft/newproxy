@@ -1,5 +1,3 @@
-// eslint-disable-next-line eslint-comments/disable-enable-pair
-/* eslint-disable @typescript-eslint/ban-types */
 type ObjectCheck<T> = T extends object ? T : Record<any, unknown>;
 
 export function types<T extends {} | null | undefined | unknown>(

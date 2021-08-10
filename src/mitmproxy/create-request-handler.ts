@@ -19,7 +19,7 @@ export function createRequestHandler(proxyConfig: ProxyConfig): RequestHandlerFn
     // Mark time of request processing start
     context.markStart();
 
-    (async () => {
+    void (async (): Promise<void> => {
       await reqHandler.go();
     })();
   };

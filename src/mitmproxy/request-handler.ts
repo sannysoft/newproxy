@@ -168,24 +168,7 @@ export class RequestHandler {
 
       // use the bind socket for NTLM
 
-      if (
-        this.rOptions.agent &&
-        this.rOptions.agent instanceof Agent &&
-        isPresent(this.rOptions.customSocketId) &&
-        this.rOptions.agent.getName
-      ) {
-        // @ts-ignore
-        logger(`Request started with agent ${this.req.toString}`);
-        const socketName = this.rOptions.agent.getName(this.rOptions);
-        const bindingSocket = this.rOptions.agent.sockets[socketName];
-        if (bindingSocket && bindingSocket.length > 0) {
-          bindingSocket[0].once('free', onFree);
-          return;
-        }
-      }
-      onFree();
-
-      function onFree(): void {
+      const onFree = (): void => {
         self.proxyReq = (self.rOptions.protocol === 'https:' ? https : http).request(
           self.rOptions,
           (proxyRes: IncomingMessage) => {
@@ -227,11 +210,28 @@ export class RequestHandler {
         });
 
         self.req.pipe(self.proxyReq);
+      };
+
+      if (
+        this.rOptions.agent &&
+        this.rOptions.agent instanceof Agent &&
+        isPresent(this.rOptions.customSocketId) &&
+        this.rOptions.agent.getName
+      ) {
+        // @ts-ignore
+        logger(`Request started with agent ${this.req.toString}`);
+        const socketName = this.rOptions.agent.getName(this.rOptions);
+        const bindingSocket = this.rOptions.agent.sockets[socketName];
+        if (bindingSocket && bindingSocket.length > 0) {
+          bindingSocket[0].once('free', onFree);
+          return;
+        }
       }
+      onFree();
     });
   }
 
-  private async interceptRequest(): Promise<void> {
+  private interceptRequest(): Promise<void> {
     return new Promise((resolve, reject) => {
       const next = (): void => {
         resolve();
@@ -258,7 +258,7 @@ export class RequestHandler {
     });
   }
 
-  private async interceptResponse(): Promise<void> {
+  private interceptResponse(): Promise<void> {
     return new Promise((resolve, reject) => {
       const next = (): void => {
         resolve();

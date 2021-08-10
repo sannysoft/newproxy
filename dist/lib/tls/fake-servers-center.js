@@ -41,6 +41,7 @@ var https = require("https");
 var forge = require("node-forge");
 var tls = require("tls");
 var debug_1 = require("debug");
+var util_1 = require("util");
 var tls_utils_1 = require("./tls-utils");
 var cert_and_key_container_1 = require("./cert-and-key-container");
 var logger_1 = require("../common/logger");
@@ -52,6 +53,7 @@ var FakeServersCenter = /** @class */ (function () {
         if (maxLength === void 0) { maxLength = 100; }
         this.queue = [];
         this.maxFakeServersCount = 100;
+        this.fakeServers = new Set();
         this.maxFakeServersCount = maxLength;
         this.requestHandler = requestHandler;
         this.upgradeHandler = upgradeHandler;
@@ -109,7 +111,7 @@ var FakeServersCenter = /** @class */ (function () {
                             key: keyPem,
                             cert: certPem,
                             SNICallback: function (sniHostname, done) {
-                                (function () { return __awaiter(_this, void 0, void 0, function () {
+                                void (function () { return __awaiter(_this, void 0, void 0, function () {
                                     var sniCertObj;
                                     return __generator(this, function (_a) {
                                         switch (_a.label) {
@@ -126,6 +128,7 @@ var FakeServersCenter = /** @class */ (function () {
                                 }); })();
                             },
                         });
+                        this.fakeServers.add(fakeServer);
                         serverObj = {
                             cert: cert,
                             key: key,
@@ -166,6 +169,29 @@ var FakeServersCenter = /** @class */ (function () {
     FakeServersCenter.prototype.reRankServer = function (index) {
         // index ==> queue foot
         this.queue.push(this.queue.splice(index, 1)[0]);
+    };
+    FakeServersCenter.prototype.close = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var _i, _a, server;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _i = 0, _a = Array.from(this.fakeServers);
+                        _b.label = 1;
+                    case 1:
+                        if (!(_i < _a.length)) return [3 /*break*/, 4];
+                        server = _a[_i];
+                        return [4 /*yield*/, util_1.promisify(server.close).call(server)];
+                    case 2:
+                        _b.sent();
+                        _b.label = 3;
+                    case 3:
+                        _i++;
+                        return [3 /*break*/, 1];
+                    case 4: return [2 /*return*/];
+                }
+            });
+        });
     };
     return FakeServersCenter;
 }());

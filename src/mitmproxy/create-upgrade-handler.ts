@@ -8,7 +8,7 @@ import { Context } from '../types/contexts/context';
 
 // create connectHandler function
 export function createUpgradeHandler(proxyConfig: ProxyConfig): UpgradeHandlerFn {
-  return async function upgradeHandler(req, clientSocket, head, ssl) {
+  return function upgradeHandler(req, clientSocket, head, ssl): void {
     const context = new Context(req, undefined, false);
 
     const clientOptions = CommonUtils.getOptionsFromRequest(context, proxyConfig);

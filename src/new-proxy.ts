@@ -2,6 +2,7 @@ import * as http from 'http';
 import * as stream from 'stream';
 import * as chalk from 'chalk';
 import { promisify } from 'util';
+import { Socket } from 'net';
 import { ProxyConfig, UserProxyConfig } from './types/proxy-config';
 import { TlsUtils } from './tls/tls-utils';
 import { createUpgradeHandler } from './mitmproxy/create-upgrade-handler';
@@ -25,7 +26,6 @@ import { makeErr } from './common/util-fns';
 import { StatusFn } from './types/functions/status-fn';
 import { Context } from './types/contexts/context';
 import { ContextNoMitm } from './types/contexts/context-no-mitm';
-import { Socket } from 'net';
 
 // eslint-disable-next-line import/no-default-export
 export default class NewProxy {
@@ -147,6 +147,11 @@ export default class NewProxy {
     this.requestHandler = createRequestHandler(this.proxyConfig);
     this.upgradeHandler = createUpgradeHandler(this.proxyConfig);
 
+    this.fakeServersCenter
+      ?.close()
+      .then(() => {})
+      .catch(() => {});
+
     this.fakeServersCenter = createFakeServerCenter(
       this.proxyConfig,
       this.requestHandler,
@@ -208,12 +213,15 @@ export default class NewProxy {
     });
   }
 
-  public stop(): Promise<void> {
+  public async stop(): Promise<void> {
     // Destroy all open sockets first
     this.serverSockets.forEach((socket) => {
       socket.destroy();
     });
     this.serverSockets = new Set();
-    return promisify(this.httpServer.close).call(this.httpServer);
+    await Promise.all([
+      promisify(this.httpServer.close).call(this.httpServer),
+      this.fakeServersCenter?.close(),
+    ]);
   }
 }

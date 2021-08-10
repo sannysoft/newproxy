@@ -13,77 +13,6 @@ import { ContextNoMitm } from '../types/contexts/context-no-mitm';
 
 const localIP = '127.0.0.1';
 
-export function createConnectHandler(
-  proxyConfig: ProxyConfig,
-  fakeServerCenter: FakeServersCenter,
-): ConnectHandlerFn {
-  // return
-  return function connectHandler(context: ContextNoMitm) {
-    const srvUrl = url.parse(`https://${context.connectRequest.url}`);
-
-    let interceptSsl = false;
-    try {
-      interceptSsl =
-        (typeof proxyConfig.sslMitm === 'function' &&
-          proxyConfig.sslMitm.call(
-            null,
-            context.connectRequest,
-            context.clientSocket,
-            context.head,
-          )) ||
-        proxyConfig.sslMitm === true;
-    } catch (error) {
-      logError(error, 'Error at sslMitm function');
-    }
-
-    if (!context.clientSocket.writable) return;
-
-    const serverHostname = srvUrl.hostname ?? makeErr('No hostname set for https request');
-    const serverPort = Number(srvUrl.port || 443);
-
-    if (!interceptSsl) {
-      const externalProxy: ExternalProxyConfigOrNull | string =
-        proxyConfig.externalProxyNoMitm && typeof proxyConfig.externalProxyNoMitm === 'function'
-          ? proxyConfig.externalProxyNoMitm(context.connectRequest, context.clientSocket)
-          : proxyConfig.externalProxyNoMitm;
-
-      context.markStart();
-      context.clientSocket.on('close', () => {
-        if (proxyConfig.statusNoMitmFn) {
-          const statusData = context.getStatusData();
-          proxyConfig.statusNoMitmFn(statusData);
-        }
-      });
-
-      if (externalProxy) {
-        connectNoMitmExternalProxy(
-          new ExternalProxyHelper(externalProxy),
-          context,
-          serverHostname,
-          serverPort,
-        );
-        return;
-      }
-
-      connect(context, serverHostname, serverPort);
-      return;
-    }
-
-    (async () => {
-      try {
-        const serverObject: ServerObject = await fakeServerCenter.getServerPromise(
-          serverHostname,
-          serverPort,
-        );
-
-        connect(context, localIP, serverObject.port);
-      } catch (error) {
-        logError(error);
-      }
-    })();
-  };
-}
-
 function connect(context: ContextNoMitm, hostname: string, port: number): ExtendedNetSocket {
   // tunneling https
   const proxySocket: ExtendedNetSocket = net.connect(port, hostname, () => {
@@ -148,4 +77,75 @@ function connectNoMitmExternalProxy(
   });
 
   return proxySocket;
+}
+
+export function createConnectHandler(
+  proxyConfig: ProxyConfig,
+  fakeServerCenter: FakeServersCenter,
+): ConnectHandlerFn {
+  // return
+  return function connectHandler(context: ContextNoMitm): void {
+    const srvUrl = url.parse(`https://${context.connectRequest.url}`);
+
+    let interceptSsl = false;
+    try {
+      interceptSsl =
+        (typeof proxyConfig.sslMitm === 'function' &&
+          proxyConfig.sslMitm.call(
+            null,
+            context.connectRequest,
+            context.clientSocket,
+            context.head,
+          )) ||
+        proxyConfig.sslMitm === true;
+    } catch (error) {
+      logError(error, 'Error at sslMitm function');
+    }
+
+    if (!context.clientSocket.writable) return;
+
+    const serverHostname = srvUrl.hostname ?? makeErr('No hostname set for https request');
+    const serverPort = Number(srvUrl.port || 443);
+
+    if (!interceptSsl) {
+      const externalProxy: ExternalProxyConfigOrNull | string =
+        proxyConfig.externalProxyNoMitm && typeof proxyConfig.externalProxyNoMitm === 'function'
+          ? proxyConfig.externalProxyNoMitm(context.connectRequest, context.clientSocket)
+          : proxyConfig.externalProxyNoMitm;
+
+      context.markStart();
+      context.clientSocket.on('close', () => {
+        if (proxyConfig.statusNoMitmFn) {
+          const statusData = context.getStatusData();
+          proxyConfig.statusNoMitmFn(statusData);
+        }
+      });
+
+      if (externalProxy) {
+        connectNoMitmExternalProxy(
+          new ExternalProxyHelper(externalProxy),
+          context,
+          serverHostname,
+          serverPort,
+        );
+        return;
+      }
+
+      connect(context, serverHostname, serverPort);
+      return;
+    }
+
+    void (async (): Promise<void> => {
+      try {
+        const serverObject: ServerObject = await fakeServerCenter.getServerPromise(
+          serverHostname,
+          serverPort,
+        );
+
+        connect(context, localIP, serverObject.port);
+      } catch (error) {
+        logError(error);
+      }
+    })();
+  };
 }

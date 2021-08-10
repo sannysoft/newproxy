@@ -13,7 +13,7 @@ import { RequestTimeoutError } from '../errors/request-timeout-error';
 import { Context } from '../types/contexts/context';
 import { isPresent } from '../types/types';
 
-const logger = Debug('newproxy.requestHandler');
+const logger = Debug('newproxy:requestHandler');
 
 export class RequestHandler {
   private readonly req: IncomingMessage;

@@ -1,9 +1,9 @@
 import * as chalk from 'chalk';
-import debug from 'debug';
+import * as Debug from 'debug';
 import { LoggingFn } from '../types/functions/log-fn';
 import { ErrorLoggingFn } from '../types/functions/error-logging-fn';
 
-const logger = debug('newproxy');
+const logger = Debug('newproxy');
 
 let loggerConfig: boolean | LoggingFn = false;
 let errorLoggerConfig: boolean | ErrorLoggingFn = false;
@@ -41,6 +41,6 @@ export function logError(message: Error | any, comment?: string): void {
       log(message, chalk.red);
     }
   } else {
-    debug(`Error: ${message}`);
+    logger(`Error: ${message}`);
   }
 }

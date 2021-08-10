@@ -1,8 +1,8 @@
 import * as https from 'https';
 import * as forge from 'node-forge';
 import * as tls from 'tls';
-import { AddressInfo } from 'net';
-import debug from 'debug';
+import { AddressInfo, Socket } from 'net';
+import * as Debug from 'debug';
 import { promisify } from 'util';
 import { TlsUtils } from './tls-utils';
 import { CertAndKeyContainer } from './cert-and-key-container';
@@ -16,7 +16,7 @@ import { Context } from '../types/contexts/context';
 
 const pki = forge.pki;
 
-const logger = debug('newproxy.fakeServer');
+const logger = Debug('newproxy:fakeServer');
 
 export class FakeServersCenter {
   private queue: ServerObjectPromise[] = [];
@@ -30,6 +30,8 @@ export class FakeServersCenter {
   private readonly upgradeHandler: UpgradeHandlerFn;
 
   private fakeServers: Set<https.Server> = new Set();
+
+  private serverSockets = new Set<Socket>();
 
   public constructor(
     maxLength = 100,
@@ -147,6 +149,13 @@ export class FakeServersCenter {
         resolve(serverObj);
       });
 
+      fakeServer.on('connection', (socket: Socket) => {
+        this.serverSockets.add(socket);
+        socket.on('close', () => {
+          this.serverSockets.delete(socket);
+        });
+      });
+
       fakeServer.on('upgrade', (req, socket, head) => {
         const ssl = true;
         this.upgradeHandler(req, socket, head, ssl);
@@ -160,6 +169,11 @@ export class FakeServersCenter {
   }
 
   public async close(): Promise<void> {
+    // Destroy all open sockets first
+    this.serverSockets.forEach((socket) => {
+      socket.destroy();
+    });
+    this.serverSockets = new Set();
     for (const server of Array.from(this.fakeServers)) {
       await promisify(server.close).call(server);
     }

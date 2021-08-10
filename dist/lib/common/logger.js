@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.logError = exports.log = exports.setErrorLoggerConfig = exports.setLoggerConfig = void 0;
 const chalk = require("chalk");
-const debug_1 = require("debug");
-const logger = debug_1.default('newproxy');
+const Debug = require("debug");
+const logger = Debug('newproxy');
 let loggerConfig = false;
 let errorLoggerConfig = false;
 function setLoggerConfig(value) {
@@ -44,7 +44,7 @@ function logError(message, comment) {
         }
     }
     else {
-        debug_1.default(`Error: ${message}`);
+        logger(`Error: ${message}`);
     }
 }
 exports.logError = logError;

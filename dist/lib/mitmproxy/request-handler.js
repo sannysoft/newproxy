@@ -11,7 +11,7 @@ const contexts_1 = require("../common/contexts");
 const util_fns_1 = require("../common/util-fns");
 const request_timeout_error_1 = require("../errors/request-timeout-error");
 const types_1 = require("../types/types");
-const logger = Debug('newproxy.requestHandler');
+const logger = Debug('newproxy:requestHandler');
 class RequestHandler {
     constructor(context, proxyConfig) {
         var _a;

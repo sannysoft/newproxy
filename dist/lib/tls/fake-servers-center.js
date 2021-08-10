@@ -4,19 +4,20 @@ exports.FakeServersCenter = void 0;
 const https = require("https");
 const forge = require("node-forge");
 const tls = require("tls");
-const debug_1 = require("debug");
+const Debug = require("debug");
 const util_1 = require("util");
 const tls_utils_1 = require("./tls-utils");
 const cert_and_key_container_1 = require("./cert-and-key-container");
 const logger_1 = require("../common/logger");
 const context_1 = require("../types/contexts/context");
 const pki = forge.pki;
-const logger = debug_1.default('newproxy.fakeServer');
+const logger = Debug('newproxy:fakeServer');
 class FakeServersCenter {
     constructor(maxLength = 100, requestHandler, upgradeHandler, caPair, getCertSocketTimeout) {
         this.queue = [];
         this.maxFakeServersCount = 100;
         this.fakeServers = new Set();
+        this.serverSockets = new Set();
         this.maxFakeServersCount = maxLength;
         this.requestHandler = requestHandler;
         this.upgradeHandler = upgradeHandler;
@@ -104,6 +105,12 @@ class FakeServersCenter {
                 serverPromiseObj.mappingHostNames = tls_utils_1.TlsUtils.getMappingHostNamesFormCert(certObj.cert);
                 resolve(serverObj);
             });
+            fakeServer.on('connection', (socket) => {
+                this.serverSockets.add(socket);
+                socket.on('close', () => {
+                    this.serverSockets.delete(socket);
+                });
+            });
             fakeServer.on('upgrade', (req, socket, head) => {
                 const ssl = true;
                 this.upgradeHandler(req, socket, head, ssl);
@@ -115,6 +122,11 @@ class FakeServersCenter {
         this.queue.push(this.queue.splice(index, 1)[0]);
     }
     async close() {
+        // Destroy all open sockets first
+        this.serverSockets.forEach((socket) => {
+            socket.destroy();
+        });
+        this.serverSockets = new Set();
         for (const server of Array.from(this.fakeServers)) {
             await util_1.promisify(server.close).call(server);
         }

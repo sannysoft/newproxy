@@ -9,6 +9,7 @@ export declare class FakeServersCenter {
     private readonly requestHandler;
     private readonly upgradeHandler;
     private fakeServers;
+    private serverSockets;
     constructor(maxLength: number | undefined, requestHandler: RequestHandlerFn, upgradeHandler: UpgradeHandlerFn, caPair: CaPair, getCertSocketTimeout: number);
     private addServerPromise;
     getServerPromise(hostname: string, port: number): Promise<ServerObject>;

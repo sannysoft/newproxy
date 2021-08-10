@@ -1,24 +1,22 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TlsUtils = void 0;
-var forge = require("node-forge");
-var mkdirp = require("mkdirp");
-var path = require("path");
-var fs = require("fs");
-var ca_config_1 = require("../common/ca-config");
-var TlsUtils = /** @class */ (function () {
-    function TlsUtils() {
-    }
-    TlsUtils.createCA = function (commonName) {
-        var keys = forge.pki.rsa.generateKeyPair(2046);
-        var cert = forge.pki.createCertificate();
+const forge = require("node-forge");
+const mkdirp = require("mkdirp");
+const path = require("path");
+const fs = require("fs");
+const ca_config_1 = require("../common/ca-config");
+class TlsUtils {
+    static createCA(commonName) {
+        const keys = forge.pki.rsa.generateKeyPair(2046);
+        const cert = forge.pki.createCertificate();
         cert.publicKey = keys.publicKey;
-        cert.serialNumber = "" + new Date().getTime();
+        cert.serialNumber = `${new Date().getTime()}`;
         cert.validity.notBefore = new Date();
         cert.validity.notBefore.setFullYear(cert.validity.notBefore.getFullYear() - 5);
         cert.validity.notAfter = new Date();
         cert.validity.notAfter.setFullYear(cert.validity.notAfter.getFullYear() + 20);
-        var attrs = [
+        const attrs = [
             {
                 name: 'commonName',
                 value: commonName,
@@ -67,21 +65,21 @@ var TlsUtils = /** @class */ (function () {
             key: keys.privateKey,
             cert: cert,
         };
-    };
-    TlsUtils.covertNodeCertToForgeCert = function (originCertificate) {
-        var obj = forge.asn1.fromDer(originCertificate.raw.toString('binary'));
+    }
+    static covertNodeCertToForgeCert(originCertificate) {
+        const obj = forge.asn1.fromDer(originCertificate.raw.toString('binary'));
         return forge.pki.certificateFromAsn1(obj);
-    };
-    TlsUtils.createFakeCertificateByDomain = function (caPair, domain) {
-        var keys = forge.pki.rsa.generateKeyPair(2046);
-        var cert = forge.pki.createCertificate();
+    }
+    static createFakeCertificateByDomain(caPair, domain) {
+        const keys = forge.pki.rsa.generateKeyPair(2046);
+        const cert = forge.pki.createCertificate();
         cert.publicKey = keys.publicKey;
-        cert.serialNumber = "" + new Date().getTime();
+        cert.serialNumber = `${new Date().getTime()}`;
         cert.validity.notBefore = new Date();
         cert.validity.notBefore.setFullYear(cert.validity.notBefore.getFullYear() - 1);
         cert.validity.notAfter = new Date();
         cert.validity.notAfter.setFullYear(cert.validity.notAfter.getFullYear() + 1);
-        var attrs = [
+        const attrs = [
             {
                 name: 'commonName',
                 value: domain,
@@ -157,20 +155,19 @@ var TlsUtils = /** @class */ (function () {
             key: keys.privateKey,
             cert: cert,
         };
-    };
-    TlsUtils.createFakeCertificateByCA = function (caPair, originCertificate) {
+    }
+    static createFakeCertificateByCA(caPair, originCertificate) {
         // const certificate = TlsUtils.covertNodeCertToForgeCert(originCertificate);
-        var keys = forge.pki.rsa.generateKeyPair(2046);
-        var cert = forge.pki.createCertificate();
+        const keys = forge.pki.rsa.generateKeyPair(2046);
+        const cert = forge.pki.createCertificate();
         cert.publicKey = keys.publicKey;
         cert.serialNumber = originCertificate.serialNumber;
         cert.validity.notBefore = new Date();
         cert.validity.notBefore.setFullYear(cert.validity.notBefore.getFullYear() - 1);
         cert.validity.notAfter = new Date();
         cert.validity.notAfter.setFullYear(cert.validity.notAfter.getFullYear() + 1);
-        var attrs = [];
-        Object.entries(originCertificate.subject).forEach(function (_a) {
-            var name = _a[0], value = _a[1];
+        const attrs = [];
+        Object.entries(originCertificate.subject).forEach(([name, value]) => {
             attrs.push({
                 shortName: name,
                 value: value,
@@ -178,11 +175,11 @@ var TlsUtils = /** @class */ (function () {
         });
         cert.setSubject(attrs);
         cert.setIssuer(caPair.cert.subject.attributes);
-        var subjectAltNames = originCertificate.subjectaltname.split(', ').map(function (name) { return ({
+        const subjectAltNames = originCertificate.subjectaltname.split(', ').map((name) => ({
             // 2 is DNS type
             type: 2,
             value: name.replace('DNS:', '').trim(),
-        }); });
+        }));
         cert.setExtensions([
             {
                 name: 'basicConstraints',
@@ -226,26 +223,26 @@ var TlsUtils = /** @class */ (function () {
             key: keys.privateKey,
             cert: cert,
         };
-    };
-    TlsUtils.isBrowserRequest = function (userAgent) {
+    }
+    static isBrowserRequest(userAgent) {
         return /mozilla/i.test(userAgent);
-    };
-    TlsUtils.isMappingHostName = function (DNSName, hostname) {
-        var reg = DNSName.replace(/\./g, '\\.').replace(/\*/g, '[^.]+');
-        reg = "^" + reg + "$";
+    }
+    static isMappingHostName(DNSName, hostname) {
+        let reg = DNSName.replace(/\./g, '\\.').replace(/\*/g, '[^.]+');
+        reg = `^${reg}$`;
         return new RegExp(reg).test(hostname);
-    };
-    TlsUtils.getMappingHostNamesFormCert = function (cert) {
+    }
+    static getMappingHostNamesFormCert(cert) {
         var _a, _b, _c, _d;
-        var mappingHostNames = [(_b = (_a = cert.subject.getField('CN')) === null || _a === void 0 ? void 0 : _a.value) !== null && _b !== void 0 ? _b : []];
+        let mappingHostNames = [(_b = (_a = cert.subject.getField('CN')) === null || _a === void 0 ? void 0 : _a.value) !== null && _b !== void 0 ? _b : []];
         // @ts-ignore
-        var altNames = (_d = (_c = cert.getExtension('subjectAltName')) === null || _c === void 0 ? void 0 : _c.altNames) !== null && _d !== void 0 ? _d : [];
-        mappingHostNames = mappingHostNames.concat(altNames.map(function (item) { return item.value; }));
+        const altNames = (_d = (_c = cert.getExtension('subjectAltName')) === null || _c === void 0 ? void 0 : _c.altNames) !== null && _d !== void 0 ? _d : [];
+        mappingHostNames = mappingHostNames.concat(altNames.map((item) => item.value));
         return mappingHostNames;
-    };
-    TlsUtils.initCA = function (basePath) {
-        var caCertPath = path.resolve(basePath, ca_config_1.caConfig.caCertFileName);
-        var caKeyPath = path.resolve(basePath, ca_config_1.caConfig.caKeyFileName);
+    }
+    static initCA(basePath) {
+        const caCertPath = path.resolve(basePath, ca_config_1.caConfig.caCertFileName);
+        const caKeyPath = path.resolve(basePath, ca_config_1.caConfig.caKeyFileName);
         try {
             fs.accessSync(caCertPath, fs.constants.F_OK);
             fs.accessSync(caKeyPath, fs.constants.F_OK);
@@ -256,12 +253,12 @@ var TlsUtils = /** @class */ (function () {
                 create: false,
             };
         }
-        catch (_a) {
-            var caObj = TlsUtils.createCA(ca_config_1.caConfig.caName);
-            var caCert = caObj.cert;
-            var cakey = caObj.key;
-            var certPem = forge.pki.certificateToPem(caCert);
-            var keyPem = forge.pki.privateKeyToPem(cakey);
+        catch {
+            const caObj = TlsUtils.createCA(ca_config_1.caConfig.caName);
+            const caCert = caObj.cert;
+            const cakey = caObj.key;
+            const certPem = forge.pki.certificateToPem(caCert);
+            const keyPem = forge.pki.privateKeyToPem(cakey);
             mkdirp.sync(path.dirname(caCertPath));
             fs.writeFileSync(caCertPath, certPem);
             fs.writeFileSync(caKeyPath, keyPem);
@@ -271,8 +268,7 @@ var TlsUtils = /** @class */ (function () {
             caKeyPath: caKeyPath,
             create: true,
         };
-    };
-    return TlsUtils;
-}());
+    }
+}
 exports.TlsUtils = TlsUtils;
 //# sourceMappingURL=tls-utils.js.map

@@ -1,6 +1,6 @@
 {
   "name": "newproxy",
-  "version": "1.5.10",
+  "version": "1.6.0",
   "description": "HTTP/HTTPS Proxy server with overrides & MITM support",
   "keywords": [],
   "main": "dist/lib/new-proxy.js",
@@ -17,7 +17,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=12.0.0"
   },
   "scripts": {
     "lint": "eslint --cache --ext .js,.jsx,.ts,.tsx ./src",
@@ -67,6 +67,7 @@
     ]
   },
   "devDependencies": {
+    "@tsconfig/node12": "^1.0.9",
     "@types/debug": "^4.1.7",
     "@types/jest": "^26.0.24",
     "@types/mkdirp": "^1.0.2",

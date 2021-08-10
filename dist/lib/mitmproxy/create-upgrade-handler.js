@@ -1,31 +1,31 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createUpgradeHandler = void 0;
-var http_1 = require("http");
-var https_1 = require("https");
-var common_utils_1 = require("../common/common-utils");
-var logger_1 = require("../common/logger");
-var context_1 = require("../types/contexts/context");
+const http_1 = require("http");
+const https_1 = require("https");
+const common_utils_1 = require("../common/common-utils");
+const logger_1 = require("../common/logger");
+const context_1 = require("../types/contexts/context");
 // create connectHandler function
 function createUpgradeHandler(proxyConfig) {
     return function upgradeHandler(req, clientSocket, head, ssl) {
-        var context = new context_1.Context(req, undefined, false);
-        var clientOptions = common_utils_1.CommonUtils.getOptionsFromRequest(context, proxyConfig);
-        var proxyReq = (ssl ? https_1.default : http_1.default).request(clientOptions);
-        proxyReq.on('error', function (error) {
+        const context = new context_1.Context(req, undefined, false);
+        const clientOptions = common_utils_1.CommonUtils.getOptionsFromRequest(context, proxyConfig);
+        const proxyReq = (ssl ? https_1.default : http_1.default).request(clientOptions);
+        proxyReq.on('error', (error) => {
             logger_1.logError(error);
         });
-        proxyReq.on('response', function (res) {
+        proxyReq.on('response', (res) => {
             // if upgrade event isn't going to happen, close the socket
             // @ts-ignore
             if (!res.upgrade)
                 clientSocket.end();
         });
-        proxyReq.on('upgrade', function (proxyRes, proxySocket, proxyHead) {
-            proxySocket.on('error', function (error) {
+        proxyReq.on('upgrade', (proxyRes, proxySocket, proxyHead) => {
+            proxySocket.on('error', (error) => {
                 logger_1.logError(error);
             });
-            clientSocket.on('error', function () {
+            clientSocket.on('error', () => {
                 proxySocket.end();
             });
             proxySocket.setTimeout(0);
@@ -33,21 +33,20 @@ function createUpgradeHandler(proxyConfig) {
             proxySocket.setKeepAlive(true, 0);
             if (proxyHead && proxyHead.length > 0)
                 proxySocket.unshift(proxyHead);
-            clientSocket.write(Object.keys(proxyRes.headers)
+            clientSocket.write(`${Object.keys(proxyRes.headers)
                 // eslint-disable-next-line unicorn/no-reduce
-                .reduce(function (aggregator, key) {
-                var value = proxyRes.headers[key];
+                .reduce((aggregator, key) => {
+                const value = proxyRes.headers[key];
                 if (!Array.isArray(value)) {
-                    aggregator.push(key + ": " + value);
+                    aggregator.push(`${key}: ${value}`);
                     return aggregator;
                 }
-                for (var _i = 0, value_1 = value; _i < value_1.length; _i++) {
-                    var element = value_1[_i];
-                    aggregator.push(key + ": " + element);
+                for (const element of value) {
+                    aggregator.push(`${key}: ${element}`);
                 }
                 return aggregator;
             }, ['HTTP/1.1 101 Switching Protocols'])
-                .join('\r\n') + "\r\n\r\n");
+                .join('\r\n')}\r\n\r\n`);
             proxySocket.pipe(clientSocket).pipe(proxySocket);
         });
         proxyReq.end();

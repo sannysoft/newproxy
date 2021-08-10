@@ -31,6 +31,8 @@ describe('Proxy test', () => {
       });
 
     await proxy.run();
-    await sleep(100000);
+    await sleep(1000);
+    await proxy.stop();
+    console.log(1);
   });
 });

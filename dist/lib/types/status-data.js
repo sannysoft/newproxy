@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StatusData = void 0;
-var StatusData = /** @class */ (function () {
-    function StatusData(request, ssl, status, time, externalProxy, requestBytes, responseBytes, serverRequestBytes, serverResponseBytes) {
+class StatusData {
+    constructor(request, ssl, status, time, externalProxy, requestBytes, responseBytes, serverRequestBytes, serverResponseBytes) {
         /**
          * External proxy config if used
          */
@@ -40,7 +40,6 @@ var StatusData = /** @class */ (function () {
         this.serverRequestBytes = serverRequestBytes;
         this.serverResponseBytes = serverResponseBytes;
     }
-    return StatusData;
-}());
+}
 exports.StatusData = StatusData;
 //# sourceMappingURL=status-data.js.map

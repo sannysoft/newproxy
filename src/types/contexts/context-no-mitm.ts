@@ -4,21 +4,12 @@ import { AbstractContext } from './abstract-context';
 import { StatusDataNoMitm } from '../status-data-no-mitm';
 
 export class ContextNoMitm extends AbstractContext {
-  public connectRequest: http.IncomingMessage;
-
-  public clientSocket: stream.Duplex;
-
-  public head: Buffer;
-
   public constructor(
-    connectRequest: http.IncomingMessage,
-    clientSocket: stream.Duplex,
-    head: Buffer,
+    public connectRequest: http.IncomingMessage,
+    public clientSocket: stream.Duplex,
+    public head: Buffer,
   ) {
     super();
-    this.connectRequest = connectRequest;
-    this.clientSocket = clientSocket;
-    this.head = head;
   }
 
   public getStatusData(): StatusDataNoMitm {

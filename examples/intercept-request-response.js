@@ -1,10 +1,10 @@
-import NewProxy from 'newproxy';
+import { NewProxyBuilder } from 'newproxy';
 
-const proxy = new NewProxy()
-  .log(message => {
+const proxy = NewProxyBuilder.new()
+  .log((message) => {
     console.log(message);
   })
-  .errorLog(error => {
+  .errorLog((error) => {
     console.error(error);
   })
   .sslMitm(() => true)
@@ -35,11 +35,12 @@ const proxy = new NewProxy()
     }
 
     next();
-  });
+  })
+  .build();
 
-process.once('SIGTERM', function(code) {
+process.once('SIGTERM', async function (code) {
   console.log('SIGTERM received...');
-  proxy.stop();
+  await proxy.stop();
 });
 
-proxy.run();
+await proxy.run();

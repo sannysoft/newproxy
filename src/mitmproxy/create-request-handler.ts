@@ -3,6 +3,7 @@ import { RequestHandlerFn } from '../types/functions/request-handler-fn';
 import { RequestHandler } from './request-handler';
 import { Context } from '../types/contexts/context';
 import { Logger } from '../common/logger';
+import { doNotWaitPromise } from '../utils/promises';
 
 // create requestHandler function
 export function createRequestHandler(proxyConfig: ProxyConfig, logger: Logger): RequestHandlerFn {
@@ -20,8 +21,6 @@ export function createRequestHandler(proxyConfig: ProxyConfig, logger: Logger): 
     // Mark time of request processing start
     context.markStart();
 
-    void (async (): Promise<void> => {
-      await reqHandler.go();
-    })();
+    doNotWaitPromise(reqHandler.go(), 'requestHandler', logger);
   };
 }

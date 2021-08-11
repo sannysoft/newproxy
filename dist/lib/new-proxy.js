@@ -15,9 +15,10 @@ class NewProxy {
         this.logger = logger;
         this.httpServer = new http.Server();
         this.serverSockets = new Set();
+        this.clientSockets = new Set();
         this.requestHandler = create_request_handler_1.createRequestHandler(this.proxyConfig, logger);
         this.upgradeHandler = create_upgrade_handler_1.createUpgradeHandler(this.proxyConfig, logger);
-        this.connectHandler = create_connect_handler_1.createConnectHandler(this.proxyConfig, this.fakeServersCenter, this.logger);
+        this.connectHandler = create_connect_handler_1.createConnectHandler(this.proxyConfig, this.fakeServersCenter, this.logger, this.clientSockets);
     }
     get fakeServersCenter() {
         if (!this._fakeServersCenter) {
@@ -69,7 +70,11 @@ class NewProxy {
         this.serverSockets.forEach((socket) => {
             socket.destroy();
         });
+        this.clientSockets.forEach((socket) => {
+            socket.destroy();
+        });
         this.serverSockets = new Set();
+        this.clientSockets = new Set();
         const promise = (_b = (_a = this.fakeServersCenter) === null || _a === void 0 ? void 0 : _a.close()) !== null && _b !== void 0 ? _b : Promise.resolve();
         await Promise.all([this.closeServer(), promise]);
     }

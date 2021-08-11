@@ -13,6 +13,7 @@ import { FakeServersCenter } from './tls/fake-servers-center';
 import { Context } from './types/contexts/context';
 import { ContextNoMitm } from './types/contexts/context-no-mitm';
 import { Logger } from './common/logger';
+import { ExtendedNetSocket } from './types/extended-net-socket';
 
 export class NewProxy {
   public readonly httpServer: http.Server = new http.Server();
@@ -27,6 +28,8 @@ export class NewProxy {
 
   private serverSockets = new Set<Socket>();
 
+  private clientSockets = new Set<ExtendedNetSocket>();
+
   private _fakeServersCenter?: FakeServersCenter;
 
   public constructor(private readonly proxyConfig: ProxyConfig, private readonly logger: Logger) {
@@ -37,6 +40,7 @@ export class NewProxy {
       this.proxyConfig,
       this.fakeServersCenter,
       this.logger,
+      this.clientSockets,
     );
   }
 
@@ -109,7 +113,12 @@ export class NewProxy {
     this.serverSockets.forEach((socket) => {
       socket.destroy();
     });
+    this.clientSockets.forEach((socket) => {
+      socket.destroy();
+    });
     this.serverSockets = new Set();
+    this.clientSockets = new Set();
+
     const promise: Promise<any> = this.fakeServersCenter?.close() ?? Promise.resolve();
     await Promise.all([this.closeServer(), promise]);
   }

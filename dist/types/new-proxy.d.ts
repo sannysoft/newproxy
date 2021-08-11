@@ -11,6 +11,7 @@ export declare class NewProxy {
     private readonly upgradeHandler;
     private readonly connectHandler;
     private serverSockets;
+    private clientSockets;
     private _fakeServersCenter?;
     constructor(proxyConfig: ProxyConfig, logger: Logger);
     get fakeServersCenter(): FakeServersCenter;

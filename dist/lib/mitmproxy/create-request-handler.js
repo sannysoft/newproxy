@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createRequestHandler = void 0;
 const request_handler_1 = require("./request-handler");
+const promises_1 = require("../utils/promises");
 // create requestHandler function
 function createRequestHandler(proxyConfig, logger) {
     return function requestHandler(context) {
@@ -14,9 +15,7 @@ function createRequestHandler(proxyConfig, logger) {
         });
         // Mark time of request processing start
         context.markStart();
-        void (async () => {
-            await reqHandler.go();
-        })();
+        promises_1.doNotWaitPromise(reqHandler.go(), 'requestHandler', logger);
     };
 }
 exports.createRequestHandler = createRequestHandler;

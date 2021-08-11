@@ -8,7 +8,7 @@ const external_proxy_config_1 = require("../types/external-proxy-config");
 const util_fns_1 = require("../common/util-fns");
 const promises_1 = require("../utils/promises");
 const localIP = '127.0.0.1';
-function connect(context, hostname, port) {
+function connect(context, hostname, port, socketsList) {
     // tunneling https
     const proxySocket = net.connect(port, hostname, () => {
         context.clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
@@ -16,12 +16,16 @@ function connect(context, hostname, port) {
         proxySocket.pipe(context.clientSocket);
         context.clientSocket.pipe(proxySocket);
     });
+    socketsList.add(proxySocket);
     proxySocket.on('error', () => {
         // logError(e);
     });
     proxySocket.on('ready', () => {
         proxySocket.connectKey = `${proxySocket.localPort}:${proxySocket.remotePort}`;
         contexts_1.contexts[proxySocket.connectKey] = context;
+    });
+    proxySocket.on('close', () => {
+        socketsList.delete(proxySocket);
     });
     proxySocket.on('end', () => {
         if (proxySocket.connectKey)
@@ -51,7 +55,7 @@ function connectNoMitmExternalProxy(proxyHelper, context, hostname, port, logger
     });
     return proxySocket;
 }
-function createConnectHandler(proxyConfig, fakeServerCenter, logger) {
+function createConnectHandler(proxyConfig, fakeServerCenter, logger, socketsList) {
     // return
     return function connectHandler(context) {
         var _a;
@@ -85,13 +89,13 @@ function createConnectHandler(proxyConfig, fakeServerCenter, logger) {
                 connectNoMitmExternalProxy(new external_proxy_config_1.ExternalProxyHelper(externalProxy), context, serverHostname, serverPort, logger);
                 return;
             }
-            connect(context, serverHostname, serverPort);
+            connect(context, serverHostname, serverPort, socketsList);
             return;
         }
         promises_1.doNotWaitPromise((async () => {
             const server = fakeServerCenter.getFakeServer(serverHostname, serverPort);
             await server.run();
-            connect(context, localIP, server.listenPort);
+            connect(context, localIP, server.listenPort, socketsList);
         })(), `Connect to fake server failed for ${serverHostname}`, logger);
     };
 }

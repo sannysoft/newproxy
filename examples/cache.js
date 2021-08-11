@@ -1,8 +1,7 @@
-import NewProxy from 'newproxy';
-
+import { NewProxyBuilder } from 'newproxy';
 const cache = {};
 
-const proxy = new NewProxy()
+const proxy = NewProxyBuilder.new()
   .sslMitm(true)
   .requestInterceptor((rOptions, clientReq, clientRes, ssl, next) => {
     clientReq.fullUrl = rOptions.url;
@@ -38,7 +37,7 @@ const proxy = new NewProxy()
 
     // Listen for data and save & send to client
     const bufs = [];
-    proxyRes.on('data', d => {
+    proxyRes.on('data', (d) => {
       bufs.push(d);
       clientRes.write(d);
     });
@@ -51,11 +50,12 @@ const proxy = new NewProxy()
         body: buf,
       };
     });
-  });
+  })
+  .build();
 
-process.once('SIGTERM', code => {
+process.once('SIGTERM', async (code) => {
   console.log('SIGTERM received...');
-  proxy.stop();
+  await proxy.stop();
 });
 
-proxy.run();
+await proxy.run();

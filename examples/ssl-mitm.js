@@ -1,6 +1,6 @@
-import NewProxy from 'newproxy';
+import { NewProxyBuilder } from 'newproxy';
 
-const proxy = new NewProxy()
+const proxy = NewProxyBuilder.new()
   .log(false)
   .errorLog(true)
   .sslMitm((req, clientSocket, head) => {
@@ -14,11 +14,11 @@ const proxy = new NewProxy()
     // proxyRes will be piped to clientRes, we can change proxyRes or write to clientRes directly here
     proxyRes.headers['mitm'] = '1';
     next();
-  });
+  }).build;
 
-process.once('SIGTERM', code => {
+process.once('SIGTERM', async (code) => {
   console.log('SIGTERM received...');
-  proxy.stop();
+  await proxy.stop();
 });
 
-proxy.run();
+await proxy.run();

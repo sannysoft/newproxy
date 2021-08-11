@@ -14,7 +14,12 @@ import { doNotWaitPromise } from '../utils/promises';
 
 const localIP = '127.0.0.1';
 
-function connect(context: ContextNoMitm, hostname: string, port: number): ExtendedNetSocket {
+function connect(
+  context: ContextNoMitm,
+  hostname: string,
+  port: number,
+  socketsList: Set<ExtendedNetSocket>,
+): ExtendedNetSocket {
   // tunneling https
   const proxySocket: ExtendedNetSocket = net.connect(port, hostname, () => {
     context.clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
@@ -24,6 +29,8 @@ function connect(context: ContextNoMitm, hostname: string, port: number): Extend
     context.clientSocket.pipe(proxySocket);
   });
 
+  socketsList.add(proxySocket);
+
   proxySocket.on('error', () => {
     // logError(e);
   });
@@ -31,6 +38,10 @@ function connect(context: ContextNoMitm, hostname: string, port: number): Extend
   proxySocket.on('ready', () => {
     proxySocket.connectKey = `${proxySocket.localPort}:${proxySocket.remotePort}`;
     contexts[proxySocket.connectKey] = context;
+  });
+
+  proxySocket.on('close', () => {
+    socketsList.delete(proxySocket);
   });
 
   proxySocket.on('end', () => {
@@ -85,6 +96,7 @@ export function createConnectHandler(
   proxyConfig: ProxyConfig,
   fakeServerCenter: FakeServersCenter,
   logger: Logger,
+  socketsList: Set<ExtendedNetSocket>,
 ): ConnectHandlerFn {
   // return
   return function connectHandler(context: ContextNoMitm): void {
@@ -135,7 +147,7 @@ export function createConnectHandler(
         return;
       }
 
-      connect(context, serverHostname, serverPort);
+      connect(context, serverHostname, serverPort, socketsList);
       return;
     }
 
@@ -144,7 +156,7 @@ export function createConnectHandler(
         const server: HttpsServer = fakeServerCenter.getFakeServer(serverHostname, serverPort);
         await server.run();
 
-        connect(context, localIP, server.listenPort!);
+        connect(context, localIP, server.listenPort!, socketsList);
       })(),
       `Connect to fake server failed for ${serverHostname}`,
       logger,

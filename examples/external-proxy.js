@@ -1,6 +1,6 @@
-import NewProxy from 'newproxy';
+import { NewProxyBuilder } from 'newproxy';
 
-const proxy = new NewProxy()
+const proxy = NewProxyBuilder.new()
   .sslMitm((req, clientSocket, head) => {
     if (req.headers['host']?.includes('google.com') === true) {
       // Do not MITM google.com
@@ -34,11 +34,12 @@ const proxy = new NewProxy()
     if (clientReq['external_proxy'] === 1) proxyRes.headers['external_proxy'] = '1';
 
     next();
-  });
+  })
+  .build();
 
-process.once('SIGTERM', code => {
+process.once('SIGTERM', async (code) => {
   console.log('SIGTERM received...');
-  proxy.stop();
+  await proxy.stop();
 });
 
-proxy.run();
+await proxy.run();

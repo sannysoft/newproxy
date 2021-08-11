@@ -17,9 +17,9 @@ npm i newproxy
 ###Usage
 
 ```js
-import NewProxy from 'newproxy';
+import { NewProxyBuilder}  from 'newproxy';
 
-const proxy = NewProxy()
+const proxy = NewProxyBuilder.new()
   .sslMitm((req, clientSocket, head) => true)
   .requestInterceptor((rOptions, clientReq, clientRes, ssl, next) => {
     clientReq.setTimeout(10000); // Set request timeout to 10 seconds
@@ -49,7 +49,8 @@ const proxy = NewProxy()
     next();
   })
   .externalProxyNoMitm('http://127.0.0.1:8800') // Set external proxy for non-MITM SSL requests
-  .externalProxy('http://127.0.0.1:8888'); // We can set external proxy statically or by fn
+  .externalProxy('http://127.0.0.1:8888')
+  .build(); // We can set external proxy statically or by fn
   
 // Start listening 
 (async () => {
@@ -58,7 +59,7 @@ const proxy = NewProxy()
 
 ...
 
-proxy.stop();
+await proxy.stop();
 ```
 
 ### Features

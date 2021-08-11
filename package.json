@@ -1,6 +1,6 @@
 {
   "name": "newproxy",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "HTTP/HTTPS Proxy server with overrides & MITM support",
   "keywords": [],
   "main": "dist/lib/index.js",
@@ -67,12 +67,10 @@
     ]
   },
   "devDependencies": {
-    "@tsconfig/node12": "^1.0.9",
     "@types/debug": "^4.1.7",
     "@types/jest": "^27.0.0",
     "@types/mkdirp": "^1.0.2",
     "@types/node": "^16.4.13",
-    "@types/node-forge": "^0.10.2",
     "@typescript-eslint/eslint-plugin": "^4.29.1",
     "@typescript-eslint/parser": "^4.29.1",
     "eslint": "^7.32.0",
@@ -102,6 +100,7 @@
   },
   "dependencies": {
     "@postman/tunnel-agent": "^0.6.3",
+    "@types/node-forge": "^0.10.2",
     "agentkeepalive": "^4.1.4",
     "chalk": "^4.1.2",
     "debug": "^4.3.2",

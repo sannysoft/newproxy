@@ -1,4 +1,4 @@
-import forge from 'node-forge';
+import * as forge from 'node-forge';
 
 export interface CaPair {
   key: forge.pki.PrivateKey;

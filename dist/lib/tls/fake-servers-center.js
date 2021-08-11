@@ -1,135 +1,67 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FakeServersCenter = void 0;
-const https = require("https");
 const forge = require("node-forge");
-const tls = require("tls");
-const Debug = require("debug");
-const util_1 = require("util");
-const tls_utils_1 = require("./tls-utils");
+const fs = require("fs");
 const cert_and_key_container_1 = require("./cert-and-key-container");
-const logger_1 = require("../common/logger");
-const context_1 = require("../types/contexts/context");
-const pki = forge.pki;
-const logger = Debug('newproxy:fakeServer');
+const https_server_1 = require("./https-server");
+const promises_1 = require("../utils/promises");
 class FakeServersCenter {
-    constructor(maxLength = 100, requestHandler, upgradeHandler, caPair, getCertSocketTimeout) {
-        this.queue = [];
-        this.maxFakeServersCount = 100;
-        this.fakeServers = new Set();
-        this.serverSockets = new Set();
-        this.maxFakeServersCount = maxLength;
+    constructor(proxyConfig, requestHandler, upgradeHandler, logger) {
         this.requestHandler = requestHandler;
         this.upgradeHandler = upgradeHandler;
-        this.certAndKeyContainer = new cert_and_key_container_1.CertAndKeyContainer(maxLength, getCertSocketTimeout, caPair);
-    }
-    addServerPromise(serverPromiseObj) {
-        var _a;
-        if (this.queue.length >= this.maxFakeServersCount) {
-            const delServerObj = this.queue.shift();
-            try {
-                // eslint-disable-next-line no-unused-expressions
-                (_a = delServerObj === null || delServerObj === void 0 ? void 0 : delServerObj.serverObj) === null || _a === void 0 ? void 0 : _a.server.close();
-            }
-            catch (error) {
-                logger_1.logError(error);
-            }
+        this.logger = logger;
+        this.queue = [];
+        this.maxFakeServersCount = 100;
+        let caPair;
+        try {
+            fs.accessSync(proxyConfig.caCertPath, fs.constants.F_OK);
+            fs.accessSync(proxyConfig.caKeyPath, fs.constants.F_OK);
+            const caCertPem = String(fs.readFileSync(proxyConfig.caCertPath));
+            const caKeyPem = String(fs.readFileSync(proxyConfig.caKeyPath));
+            const caCert = forge.pki.certificateFromPem(caCertPem);
+            const caKey = forge.pki.privateKeyFromPem(caKeyPem);
+            caPair = {
+                key: caKey,
+                cert: caCert,
+            };
         }
-        this.queue.push(serverPromiseObj);
-        return serverPromiseObj;
+        catch (error) {
+            this.logger.logError(`Can not find \`CA certificate\` or \`CA key\`.`);
+            throw error;
+        }
+        this.certAndKeyContainer = new cert_and_key_container_1.CertAndKeyContainer(this.maxFakeServersCount, proxyConfig.getCertSocketTimeout, caPair, this.logger);
     }
-    getServerPromise(hostname, port) {
+    getFakeServer(hostname, port) {
+        // Look for existing server
         for (let i = 0; i < this.queue.length; i++) {
-            const serverPromiseObj = this.queue[i];
-            const mappingHostNames = serverPromiseObj.mappingHostNames;
-            // eslint-disable-next-line no-restricted-syntax
-            for (const DNSName of mappingHostNames) {
-                if (tls_utils_1.TlsUtils.isMappingHostName(DNSName, hostname)) {
-                    this.reRankServer(i);
-                    return serverPromiseObj.promise;
-                }
+            const server = this.queue[i];
+            if (server.doesMatchHostname(hostname)) {
+                this.reRankServer(i);
+                return server;
             }
         }
-        // @ts-ignore
-        const serverPromiseObj = {
-            mappingHostNames: [hostname], // temporary hostname
-        };
-        serverPromiseObj.promise = this.createNewServerPromise(hostname, port, serverPromiseObj);
-        return this.addServerPromise(serverPromiseObj).promise;
-    }
-    async createNewServerPromise(hostname, port, serverPromiseObj) {
-        const certObj = await this.certAndKeyContainer.getCertPromise(hostname, port);
-        const cert = certObj.cert;
-        const key = certObj.key;
-        const certPem = pki.certificateToPem(cert);
-        const keyPem = pki.privateKeyToPem(key);
-        const fakeServer = new https.Server({
-            key: keyPem,
-            cert: certPem,
-            SNICallback: (sniHostname, done) => {
-                void (async () => {
-                    const sniCertObj = await this.certAndKeyContainer.getCertPromise(sniHostname, port);
-                    done(null, tls.createSecureContext({
-                        key: pki.privateKeyToPem(sniCertObj.key),
-                        cert: pki.certificateToPem(sniCertObj.cert),
-                    }));
-                })();
-            },
-        });
-        this.fakeServers.add(fakeServer);
-        const serverObj = {
-            cert: cert,
-            key: key,
-            server: fakeServer,
-            port: 0, // if port === 0, should listen server's `listening` event.
-        };
-        // eslint-disable-next-line no-param-reassign
-        serverPromiseObj.serverObj = serverObj;
-        return new Promise((resolve) => {
-            fakeServer.listen(0, () => {
-                const address = fakeServer.address();
-                serverObj.port = address.port;
-                logger(`Fake server created at port ${address.port}`);
-            });
-            fakeServer.on('request', (req, res) => {
-                logger(`New request received by fake-server: ${res.toString()}`);
-                const context = new context_1.Context(req, res, true);
-                this.requestHandler(context);
-            });
-            fakeServer.on('error', (e) => {
-                logger(`Error by fake-server: ${e.toString()}`);
-                logger_1.logError(e);
-            });
-            fakeServer.on('listening', () => {
-                // eslint-disable-next-line no-param-reassign
-                serverPromiseObj.mappingHostNames = tls_utils_1.TlsUtils.getMappingHostNamesFormCert(certObj.cert);
-                resolve(serverObj);
-            });
-            fakeServer.on('connection', (socket) => {
-                this.serverSockets.add(socket);
-                socket.on('close', () => {
-                    this.serverSockets.delete(socket);
-                });
-            });
-            fakeServer.on('upgrade', (req, socket, head) => {
-                const ssl = true;
-                this.upgradeHandler(req, socket, head, ssl);
-            });
-        });
+        // Check if we are over limit
+        if (this.queue.length >= this.maxFakeServersCount) {
+            const serverToDelete = this.queue.shift();
+            if (serverToDelete)
+                if (serverToDelete.isRunning || serverToDelete.isLaunching) {
+                    promises_1.doNotWaitPromise(serverToDelete.stop(), `Stopping server for ${serverToDelete.mappingHostNames.join(',')}`, this.logger);
+                }
+        }
+        // Create new one
+        const newServer = new https_server_1.HttpsServer(this.certAndKeyContainer, this.logger, hostname, port, this.requestHandler, this.upgradeHandler);
+        this.queue.push(newServer);
+        promises_1.doNotWaitPromise(newServer.run(), `Server launched for ${hostname}`, this.logger);
+        return newServer;
     }
     reRankServer(index) {
         // index ==> queue foot
         this.queue.push(this.queue.splice(index, 1)[0]);
     }
     async close() {
-        // Destroy all open sockets first
-        this.serverSockets.forEach((socket) => {
-            socket.destroy();
-        });
-        this.serverSockets = new Set();
-        for (const server of Array.from(this.fakeServers)) {
-            await util_1.promisify(server.close).call(server);
-        }
+        // Destroy all fake servers
+        await Promise.all(this.queue.map((server) => server.stop()));
     }
 }
 exports.FakeServersCenter = FakeServersCenter;

@@ -4,16 +4,15 @@ exports.createUpgradeHandler = void 0;
 const http_1 = require("http");
 const https_1 = require("https");
 const common_utils_1 = require("../common/common-utils");
-const logger_1 = require("../common/logger");
 const context_1 = require("../types/contexts/context");
 // create connectHandler function
-function createUpgradeHandler(proxyConfig) {
+function createUpgradeHandler(proxyConfig, logger) {
     return function upgradeHandler(req, clientSocket, head, ssl) {
         const context = new context_1.Context(req, undefined, false);
-        const clientOptions = common_utils_1.CommonUtils.getOptionsFromRequest(context, proxyConfig);
+        const clientOptions = common_utils_1.CommonUtils.getOptionsFromRequest(context, proxyConfig, logger);
         const proxyReq = (ssl ? https_1.default : http_1.default).request(clientOptions);
         proxyReq.on('error', (error) => {
-            logger_1.logError(error);
+            logger.logError(error);
         });
         proxyReq.on('response', (res) => {
             // if upgrade event isn't going to happen, close the socket
@@ -23,7 +22,7 @@ function createUpgradeHandler(proxyConfig) {
         });
         proxyReq.on('upgrade', (proxyRes, proxySocket, proxyHead) => {
             proxySocket.on('error', (error) => {
-                logger_1.logError(error);
+                logger.logError(error);
             });
             clientSocket.on('error', () => {
                 proxySocket.end();

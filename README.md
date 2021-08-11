@@ -19,7 +19,7 @@ npm i newproxy
 ```js
 import NewProxy from 'newproxy';
 
-const proxy = new NewProxy()
+const proxy = NewProxy()
   .sslMitm((req, clientSocket, head) => true)
   .requestInterceptor((rOptions, clientReq, clientRes, ssl, next) => {
     clientReq.setTimeout(10000); // Set request timeout to 10 seconds

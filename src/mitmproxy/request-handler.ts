@@ -6,14 +6,14 @@ import * as net from 'net';
 import { CommonUtils } from '../common/common-utils';
 import { ProxyConfig } from '../types/proxy-config';
 import { ExtendedRequestOptions } from '../types/request-options';
-import { logError } from '../common/logger';
 import { contexts } from '../common/contexts';
 import { makeErr } from '../common/util-fns';
 import { RequestTimeoutError } from '../errors/request-timeout-error';
 import { Context } from '../types/contexts/context';
 import { isPresent } from '../types/types';
+import { Logger } from '../common/logger';
 
-const logger = Debug('newproxy:requestHandler');
+const internalLogger = Debug('newproxy:requestHandler');
 
 export class RequestHandler {
   private readonly req: IncomingMessage;
@@ -26,14 +26,20 @@ export class RequestHandler {
 
   private proxyRes?: IncomingMessage;
 
-  public constructor(private readonly context: Context, private readonly proxyConfig: ProxyConfig) {
+  public constructor(
+    private readonly context: Context,
+    private readonly proxyConfig: ProxyConfig,
+    private readonly logger: Logger,
+  ) {
     this.req = context.clientReq;
     this.res = context.clientRes ?? makeErr('No clientResponse set in context');
-    this.rOptions = CommonUtils.getOptionsFromRequest(this.context, this.proxyConfig);
+    this.rOptions = CommonUtils.getOptionsFromRequest(this.context, this.proxyConfig, logger);
   }
 
   public async go(): Promise<void> {
-    logger(`Request handler called for request (ssl=${this.context.ssl}) ${this.req.toString()}`);
+    internalLogger(
+      `Request handler called for request (ssl=${this.context.ssl}) ${this.req.toString()}`,
+    );
 
     if (this.res.finished) {
       return;
@@ -45,7 +51,7 @@ export class RequestHandler {
       try {
         await this.interceptRequest();
       } catch (error) {
-        logError(error, 'Problem at request interception');
+        this.logger.logError(error, 'Problem at request interception');
         if (!this.res.finished) {
           this.context.setStatusCode(502);
           this.res.writeHead(502);
@@ -67,7 +73,7 @@ export class RequestHandler {
           this.proxyRes.socket.bytesRead,
         );
       } catch (error) {
-        logError(error, 'Problem at request processing');
+        this.logger.logError(error, 'Problem at request processing');
         if (this.res.finished) {
           return;
         }
@@ -91,7 +97,7 @@ export class RequestHandler {
       try {
         await this.interceptResponse();
       } catch (error) {
-        logError(error, 'Problem with response interception');
+        this.logger.logError(error, 'Problem with response interception');
         if (!this.res.finished) {
           this.res.writeHead(500);
           this.res.write(`Proxy Warning:\r\n\r\n${error.toString()}`);
@@ -111,7 +117,7 @@ export class RequestHandler {
         this.res.end();
       }
 
-      logError(error);
+      this.logger.logError(error);
     }
   }
 
@@ -120,7 +126,7 @@ export class RequestHandler {
     const proxyRes = this.proxyRes;
 
     if (this.res.headersSent) {
-      logger('Headers sent already');
+      internalLogger('Headers sent already');
     } else {
       // prevent duplicate set headers
       Object.keys(proxyRes.headers).forEach((key) => {
@@ -142,7 +148,7 @@ export class RequestHandler {
             this.res.setHeader(headerName, headerValue);
           }
         } catch (error) {
-          logger(`Error sending header${error}`);
+          internalLogger(`Error sending header: ${error}`);
         }
       });
 
@@ -153,10 +159,10 @@ export class RequestHandler {
 
     if (!this.res.finished)
       try {
-        logger('Start piping');
+        internalLogger('Start piping');
         proxyRes.pipe(this.res);
       } catch (error) {
-        logger(`Piping error: ${error.message}`);
+        internalLogger(`Piping error: ${error.message}`);
       }
   }
 
@@ -186,17 +192,17 @@ export class RequestHandler {
         self.proxyReq.setTimeout(timeout, () => {});
 
         self.proxyReq.on('timeout', () => {
-          logger(`ProxyRequest timeout for ${self.req.toString()}`);
+          internalLogger(`ProxyRequest timeout for ${self.req.toString()}`);
           reject(new RequestTimeoutError(`${self.rOptions.host}:${self.rOptions.port}`, timeout));
         });
 
         self.proxyReq.on('error', (e: Error) => {
-          logger(`ProxyRequest error: ${e.message}`);
+          internalLogger(`ProxyRequest error: ${e.message}`);
           reject(e);
         });
 
         self.proxyReq.on('aborted', () => {
-          logger(`ProxyRequest aborted for ${self.req.toString()}`);
+          internalLogger(`ProxyRequest aborted for ${self.req.toString()}`);
           reject(new Error('Proxy server aborted the request'));
           // TODO: Check if it's ok
           // @ts-ignore
@@ -204,7 +210,7 @@ export class RequestHandler {
         });
 
         self.req.on('aborted', () => {
-          logger(`Request aborted ${self.req.toString}`);
+          internalLogger(`Request aborted ${self.req.toString}`);
           // eslint-disable-next-line no-unused-expressions
           self.proxyReq?.abort();
         });

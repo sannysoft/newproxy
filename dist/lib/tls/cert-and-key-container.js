@@ -3,9 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CertAndKeyContainer = void 0;
 const https = require("https");
 const tls_utils_1 = require("./tls-utils");
-const logger_1 = require("../common/logger");
 class CertAndKeyContainer {
-    constructor(maxLength = 1000, getCertSocketTimeout = 2 * 1000, caPair) {
+    constructor(maxLength = 1000, getCertSocketTimeout = 2 * 1000, caPair, logger) {
+        this.logger = logger;
         this.queue = [];
         this.maxLength = maxLength;
         this.getCertSocketTimeout = getCertSocketTimeout;
@@ -54,7 +54,7 @@ class CertAndKeyContainer {
                             certObj = tls_utils_1.TlsUtils.createFakeCertificateByCA(this.caPair, realCert);
                         }
                         catch (error) {
-                            logger_1.logError(error);
+                            this.logger.logError(error);
                         }
                     if (!certObj)
                         certObj = tls_utils_1.TlsUtils.createFakeCertificateByDomain(this.caPair, hostname);

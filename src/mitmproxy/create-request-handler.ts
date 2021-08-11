@@ -2,11 +2,12 @@ import { ProxyConfig } from '../types/proxy-config';
 import { RequestHandlerFn } from '../types/functions/request-handler-fn';
 import { RequestHandler } from './request-handler';
 import { Context } from '../types/contexts/context';
+import { Logger } from '../common/logger';
 
 // create requestHandler function
-export function createRequestHandler(proxyConfig: ProxyConfig): RequestHandlerFn {
+export function createRequestHandler(proxyConfig: ProxyConfig, logger: Logger): RequestHandlerFn {
   return function requestHandler(context: Context): void {
-    const reqHandler = new RequestHandler(context, proxyConfig);
+    const reqHandler = new RequestHandler(context, proxyConfig, logger);
 
     context.clientReq.socket.on('close', () => {
       if (proxyConfig?.statusFn) {

@@ -1,19 +1,17 @@
-import { CaPair } from '../types/ca-pair';
-import { ServerObject } from '../types/server-object';
 import { UpgradeHandlerFn } from '../types/functions/upgrade-handler-fn';
 import { RequestHandlerFn } from '../types/functions/request-handler-fn';
+import { Logger } from '../common/logger';
+import { ProxyConfig } from '../types/proxy-config';
+import { HttpsServer } from './https-server';
 export declare class FakeServersCenter {
-    private queue;
-    private readonly maxFakeServersCount;
-    private certAndKeyContainer;
     private readonly requestHandler;
     private readonly upgradeHandler;
-    private fakeServers;
-    private serverSockets;
-    constructor(maxLength: number | undefined, requestHandler: RequestHandlerFn, upgradeHandler: UpgradeHandlerFn, caPair: CaPair, getCertSocketTimeout: number);
-    private addServerPromise;
-    getServerPromise(hostname: string, port: number): Promise<ServerObject>;
-    private createNewServerPromise;
+    private readonly logger;
+    private queue;
+    private readonly maxFakeServersCount;
+    private readonly certAndKeyContainer;
+    constructor(proxyConfig: ProxyConfig, requestHandler: RequestHandlerFn, upgradeHandler: UpgradeHandlerFn, logger: Logger);
+    getFakeServer(hostname: string, port: number): HttpsServer;
     private reRankServer;
     close(): Promise<void>;
 }

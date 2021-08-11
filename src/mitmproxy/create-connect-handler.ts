@@ -4,12 +4,13 @@ import { FakeServersCenter } from '../tls/fake-servers-center';
 import { contexts } from '../common/contexts';
 import { ExtendedNetSocket } from '../types/extended-net-socket';
 import { ConnectHandlerFn } from '../types/functions/connect-handler-fn';
-import { ServerObject } from '../types/server-object';
-import { logError } from '../common/logger';
+import { Logger } from '../common/logger';
 import { ProxyConfig } from '../types/proxy-config';
 import { ExternalProxyHelper, ExternalProxyConfigOrNull } from '../types/external-proxy-config';
 import { makeErr } from '../common/util-fns';
 import { ContextNoMitm } from '../types/contexts/context-no-mitm';
+import { HttpsServer } from '../tls/https-server';
+import { doNotWaitPromise } from '../utils/promises';
 
 const localIP = '127.0.0.1';
 
@@ -44,6 +45,7 @@ function connectNoMitmExternalProxy(
   context: ContextNoMitm,
   hostname: string,
   port: number,
+  logger: Logger,
 ): ExtendedNetSocket {
   const proxySocket: ExtendedNetSocket = net.connect(
     Number(proxyHelper.getUrlObject().port!!),
@@ -73,7 +75,7 @@ function connectNoMitmExternalProxy(
   );
 
   proxySocket.on('error', (e: Error) => {
-    logError(e);
+    logger.logError(e);
   });
 
   return proxySocket;
@@ -82,6 +84,7 @@ function connectNoMitmExternalProxy(
 export function createConnectHandler(
   proxyConfig: ProxyConfig,
   fakeServerCenter: FakeServersCenter,
+  logger: Logger,
 ): ConnectHandlerFn {
   // return
   return function connectHandler(context: ContextNoMitm): void {
@@ -99,7 +102,7 @@ export function createConnectHandler(
           )) ||
         proxyConfig.sslMitm === true;
     } catch (error) {
-      logError(error, 'Error at sslMitm function');
+      logger.logError(error, 'Error at sslMitm function');
     }
 
     if (!context.clientSocket.writable) return;
@@ -127,6 +130,7 @@ export function createConnectHandler(
           context,
           serverHostname,
           serverPort,
+          logger,
         );
         return;
       }
@@ -135,17 +139,15 @@ export function createConnectHandler(
       return;
     }
 
-    void (async (): Promise<void> => {
-      try {
-        const serverObject: ServerObject = await fakeServerCenter.getServerPromise(
-          serverHostname,
-          serverPort,
-        );
+    doNotWaitPromise(
+      (async (): Promise<void> => {
+        const server: HttpsServer = fakeServerCenter.getFakeServer(serverHostname, serverPort);
+        await server.run();
 
-        connect(context, localIP, serverObject.port);
-      } catch (error) {
-        logError(error);
-      }
-    })();
+        connect(context, localIP, server.listenPort!);
+      })(),
+      `Connect to fake server failed for ${serverHostname}`,
+      logger,
+    );
   };
 }

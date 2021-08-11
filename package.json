@@ -1,11 +1,11 @@
 {
   "name": "newproxy",
-  "version": "1.6.2",
+  "version": "2.0.0-beta1",
   "description": "HTTP/HTTPS Proxy server with overrides & MITM support",
   "keywords": [],
-  "main": "dist/lib/new-proxy.js",
-  "module": "dist/lib/new-proxy.js",
-  "typings": "dist/types/new-proxy.d.ts",
+  "main": "dist/lib/index.js",
+  "module": "dist/lib/index.js",
+  "typings": "dist/types/index.d.ts",
   "files": [
     "dist"
   ],
@@ -69,7 +69,7 @@
   "devDependencies": {
     "@tsconfig/node12": "^1.0.9",
     "@types/debug": "^4.1.7",
-    "@types/jest": "^26.0.24",
+    "@types/jest": "^27.0.0",
     "@types/mkdirp": "^1.0.2",
     "@types/node": "^16.4.13",
     "@types/node-forge": "^0.10.2",

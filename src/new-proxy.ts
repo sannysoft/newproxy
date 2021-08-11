@@ -1,180 +1,71 @@
 import * as http from 'http';
 import * as stream from 'stream';
 import * as chalk from 'chalk';
-import { promisify } from 'util';
 import { Socket } from 'net';
-import { ProxyConfig, UserProxyConfig } from './types/proxy-config';
-import { TlsUtils } from './tls/tls-utils';
+import { ProxyConfig } from './types/proxy-config';
 import { createUpgradeHandler } from './mitmproxy/create-upgrade-handler';
-import { createFakeServerCenter } from './mitmproxy/create-fake-server-center';
 import { createConnectHandler } from './mitmproxy/create-connect-handler';
 import { createRequestHandler } from './mitmproxy/create-request-handler';
-import { caConfig } from './common/ca-config';
-import { log, logError, setErrorLoggerConfig, setLoggerConfig } from './common/logger';
-import { SslMitmFn } from './types/functions/ssl-connect-interceptor';
-import { RequestInterceptorFn } from './types/functions/request-interceptor-fn';
-import { ResponseInterceptorFn } from './types/functions/response-interceptor-fn';
-import { ExternalProxyFn, ExternalProxyNoMitmFn } from './types/functions/external-proxy-fn';
-import { LoggingFn } from './types/functions/log-fn';
 import { RequestHandlerFn } from './types/functions/request-handler-fn';
 import { UpgradeHandlerFn } from './types/functions/upgrade-handler-fn';
 import { ConnectHandlerFn } from './types/functions/connect-handler-fn';
 import { FakeServersCenter } from './tls/fake-servers-center';
-import { ErrorLoggingFn } from './types/functions/error-logging-fn';
-import { ExternalProxyConfig } from './types/external-proxy-config';
-import { makeErr } from './common/util-fns';
-import { StatusFn } from './types/functions/status-fn';
 import { Context } from './types/contexts/context';
 import { ContextNoMitm } from './types/contexts/context-no-mitm';
+import { Logger } from './common/logger';
 
-// eslint-disable-next-line import/no-default-export
-export default class NewProxy {
-  protected proxyConfig: ProxyConfig;
+export class NewProxy {
+  public readonly httpServer: http.Server = new http.Server();
 
-  public httpServer: http.Server;
+  // handlers
 
-  private requestHandler?: RequestHandlerFn;
+  private readonly requestHandler: RequestHandlerFn;
 
-  private upgradeHandler?: UpgradeHandlerFn;
+  private readonly upgradeHandler: UpgradeHandlerFn;
 
-  private fakeServersCenter?: FakeServersCenter;
-
-  private connectHandler?: ConnectHandlerFn;
+  private readonly connectHandler: ConnectHandlerFn;
 
   private serverSockets = new Set<Socket>();
 
-  public constructor(userProxyConfig: UserProxyConfig = {}) {
-    this.proxyConfig = NewProxy.setDefaultsForConfig(userProxyConfig);
-    this.httpServer = new http.Server();
+  private _fakeServersCenter?: FakeServersCenter;
+
+  public constructor(private readonly proxyConfig: ProxyConfig, private readonly logger: Logger) {
+    this.requestHandler = createRequestHandler(this.proxyConfig, logger);
+    this.upgradeHandler = createUpgradeHandler(this.proxyConfig, logger);
+
+    this.connectHandler = createConnectHandler(
+      this.proxyConfig,
+      this.fakeServersCenter,
+      this.logger,
+    );
   }
 
-  public port(port: number): NewProxy {
-    this.proxyConfig.port = port;
-    return this;
-  }
-
-  public sslMitm(value: SslMitmFn | boolean): NewProxy {
-    this.proxyConfig.sslMitm = value;
-    return this;
-  }
-
-  public requestInterceptor(value: RequestInterceptorFn): NewProxy {
-    this.proxyConfig.requestInterceptor = value;
-    return this;
-  }
-
-  public responseInterceptor(value: ResponseInterceptorFn): NewProxy {
-    this.proxyConfig.responseInterceptor = value;
-    return this;
-  }
-
-  public log(value: boolean | LoggingFn): NewProxy {
-    this.proxyConfig.log = value;
-    return this;
-  }
-
-  public metrics(value: StatusFn): NewProxy {
-    this.proxyConfig.statusFn = value;
-    return this;
-  }
-
-  public errorLog(value: boolean | ErrorLoggingFn): NewProxy {
-    this.proxyConfig.errorLog = value;
-    return this;
-  }
-
-  public ca(caKeyPath: string, caCertPath: string): NewProxy {
-    this.proxyConfig.caKeyPath = caKeyPath;
-    this.proxyConfig.caCertPath = caCertPath;
-    return this;
-  }
-
-  public externalProxy(value: ExternalProxyConfig | ExternalProxyFn | undefined): NewProxy {
-    this.proxyConfig.externalProxy = value;
-    return this;
-  }
-
-  public externalProxyNoMitm(
-    value: ExternalProxyConfig | ExternalProxyNoMitmFn | undefined,
-  ): NewProxy {
-    this.proxyConfig.externalProxyNoMitm = value;
-    return this;
-  }
-
-  private static setDefaultsForConfig(userConfig: UserProxyConfig): ProxyConfig {
-    let { caCertPath, caKeyPath } = userConfig;
-
-    if (!userConfig.caCertPath || !userConfig.caKeyPath) {
-      const rs = TlsUtils.initCA(caConfig.getDefaultCABasePath());
-      caCertPath = rs.caCertPath;
-      caKeyPath = rs.caKeyPath;
-
-      if (rs.create) {
-        log(`CA Cert saved in: ${caCertPath}`, chalk.cyan);
-        log(`CA private key saved in: ${caKeyPath}`, chalk.cyan);
-      }
+  get fakeServersCenter(): FakeServersCenter {
+    if (!this._fakeServersCenter) {
+      this._fakeServersCenter = new FakeServersCenter(
+        this.proxyConfig,
+        this.requestHandler,
+        this.upgradeHandler,
+        this.logger,
+      );
     }
 
-    return {
-      port: userConfig.port || 6789,
-
-      log: userConfig.log || true,
-      errorLog: userConfig.errorLog || true,
-
-      statusFn: userConfig.statusFn || undefined,
-      statusNoMitmFn: userConfig.statusNoMitmFn || undefined,
-
-      sslMitm: userConfig.sslMitm || undefined,
-      requestInterceptor: userConfig.requestInterceptor || undefined,
-      responseInterceptor: userConfig.responseInterceptor || undefined,
-
-      getCertSocketTimeout: userConfig.getCertSocketTimeout || 10000,
-
-      externalProxy: userConfig.externalProxy || undefined,
-      externalProxyNoMitm: userConfig.externalProxyNoMitm || undefined,
-
-      caCertPath: caCertPath ?? makeErr('No caCertPath'),
-      caKeyPath: caKeyPath ?? makeErr('No caKeyPath'),
-    };
-  }
-
-  public setup(): void {
-    this.proxyConfig = NewProxy.setDefaultsForConfig(this.proxyConfig);
-
-    setLoggerConfig(this.proxyConfig.log);
-    setErrorLoggerConfig(this.proxyConfig.errorLog);
-
-    this.requestHandler = createRequestHandler(this.proxyConfig);
-    this.upgradeHandler = createUpgradeHandler(this.proxyConfig);
-
-    this.fakeServersCenter
-      ?.close()
-      .then(() => {})
-      .catch(() => {});
-
-    this.fakeServersCenter = createFakeServerCenter(
-      this.proxyConfig,
-      this.requestHandler,
-      this.upgradeHandler,
-    );
-
-    this.connectHandler = createConnectHandler(this.proxyConfig, this.fakeServersCenter);
+    return this._fakeServersCenter;
   }
 
   public run(): Promise<void> {
     // Don't reject unauthorized
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-    this.setup();
-
     return new Promise((resolve, reject) => {
       this.httpServer.once('error', (error: Error) => {
         reject(error);
       });
       this.httpServer.listen(this.proxyConfig.port, () => {
-        log(`NewProxy is listening on port ${this.proxyConfig.port}`, chalk.green);
+        this.logger.log(`NewProxy is listening on port ${this.proxyConfig.port}`, chalk.green);
+
         this.httpServer.on('error', (e: Error) => {
-          logError(e);
+          this.logger.logError(e);
         });
 
         this.httpServer.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
@@ -219,9 +110,17 @@ export default class NewProxy {
       socket.destroy();
     });
     this.serverSockets = new Set();
-    await Promise.all([
-      promisify(this.httpServer.close).call(this.httpServer),
-      this.fakeServersCenter?.close(),
-    ]);
+    const promise: Promise<any> = this.fakeServersCenter?.close() ?? Promise.resolve();
+    await Promise.all([this.closeServer(), promise]);
+  }
+
+  private closeServer(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.httpServer.close((err) => {
+        if (err) reject(err);
+
+        resolve();
+      });
+    });
   }
 }

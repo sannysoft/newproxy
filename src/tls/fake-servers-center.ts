@@ -1,166 +1,90 @@
-import * as https from 'https';
 import * as forge from 'node-forge';
-import * as tls from 'tls';
-import { AddressInfo, Socket } from 'net';
-import * as Debug from 'debug';
-import { promisify } from 'util';
-import { TlsUtils } from './tls-utils';
+import * as fs from 'fs';
 import { CertAndKeyContainer } from './cert-and-key-container';
 import { CaPair } from '../types/ca-pair';
-import { ServerObject } from '../types/server-object';
-import { ServerObjectPromise } from '../types/server-object-promise';
 import { UpgradeHandlerFn } from '../types/functions/upgrade-handler-fn';
 import { RequestHandlerFn } from '../types/functions/request-handler-fn';
-import { logError } from '../common/logger';
-import { Context } from '../types/contexts/context';
-
-const pki = forge.pki;
-
-const logger = Debug('newproxy:fakeServer');
+import { Logger } from '../common/logger';
+import { ProxyConfig } from '../types/proxy-config';
+import { HttpsServer } from './https-server';
+import { doNotWaitPromise } from '../utils/promises';
 
 export class FakeServersCenter {
-  private queue: ServerObjectPromise[] = [];
+  private queue: HttpsServer[] = [];
 
   private readonly maxFakeServersCount: number = 100;
 
-  private certAndKeyContainer: CertAndKeyContainer;
-
-  private readonly requestHandler: RequestHandlerFn;
-
-  private readonly upgradeHandler: UpgradeHandlerFn;
-
-  private fakeServers: Set<https.Server> = new Set();
-
-  private serverSockets = new Set<Socket>();
+  private readonly certAndKeyContainer: CertAndKeyContainer;
 
   public constructor(
-    maxLength = 100,
-    requestHandler: RequestHandlerFn,
-    upgradeHandler: UpgradeHandlerFn,
-    caPair: CaPair,
-    getCertSocketTimeout: number,
+    proxyConfig: ProxyConfig,
+    private readonly requestHandler: RequestHandlerFn,
+    private readonly upgradeHandler: UpgradeHandlerFn,
+    private readonly logger: Logger,
   ) {
-    this.maxFakeServersCount = maxLength;
-    this.requestHandler = requestHandler;
-    this.upgradeHandler = upgradeHandler;
-    this.certAndKeyContainer = new CertAndKeyContainer(maxLength, getCertSocketTimeout, caPair);
-  }
-
-  private addServerPromise(serverPromiseObj: ServerObjectPromise): ServerObjectPromise {
-    if (this.queue.length >= this.maxFakeServersCount) {
-      const delServerObj = this.queue.shift();
-      try {
-        // eslint-disable-next-line no-unused-expressions
-        delServerObj?.serverObj?.server.close();
-      } catch (error) {
-        logError(error);
-      }
+    let caPair: CaPair;
+    try {
+      fs.accessSync(proxyConfig.caCertPath, fs.constants.F_OK);
+      fs.accessSync(proxyConfig.caKeyPath, fs.constants.F_OK);
+      const caCertPem = String(fs.readFileSync(proxyConfig.caCertPath));
+      const caKeyPem = String(fs.readFileSync(proxyConfig.caKeyPath));
+      const caCert = forge.pki.certificateFromPem(caCertPem);
+      const caKey = forge.pki.privateKeyFromPem(caKeyPem);
+      caPair = {
+        key: caKey,
+        cert: caCert,
+      };
+    } catch (error) {
+      this.logger.logError(`Can not find \`CA certificate\` or \`CA key\`.`);
+      throw error;
     }
-    this.queue.push(serverPromiseObj);
 
-    return serverPromiseObj;
+    this.certAndKeyContainer = new CertAndKeyContainer(
+      this.maxFakeServersCount,
+      proxyConfig.getCertSocketTimeout,
+      caPair,
+      this.logger,
+    );
   }
 
-  public getServerPromise(hostname: string, port: number): Promise<ServerObject> {
+  public getFakeServer(hostname: string, port: number): HttpsServer {
+    // Look for existing server
     for (let i = 0; i < this.queue.length; i++) {
-      const serverPromiseObj = this.queue[i];
-      const mappingHostNames = serverPromiseObj.mappingHostNames;
-      // eslint-disable-next-line no-restricted-syntax
-      for (const DNSName of mappingHostNames) {
-        if (TlsUtils.isMappingHostName(DNSName, hostname)) {
-          this.reRankServer(i);
-          return serverPromiseObj.promise;
-        }
+      const server = this.queue[i];
+      if (server.doesMatchHostname(hostname)) {
+        this.reRankServer(i);
+        return server;
       }
     }
 
-    // @ts-ignore
-    const serverPromiseObj: ServerObjectPromise = {
-      mappingHostNames: [hostname], // temporary hostname
-    };
-
-    serverPromiseObj.promise = this.createNewServerPromise(hostname, port, serverPromiseObj);
-
-    return this.addServerPromise(serverPromiseObj).promise;
-  }
-
-  private async createNewServerPromise(
-    hostname: string,
-    port: number,
-    serverPromiseObj: ServerObjectPromise,
-  ): Promise<ServerObject> {
-    const certObj = await this.certAndKeyContainer.getCertPromise(hostname, port);
-
-    const cert = certObj.cert;
-    const key = certObj.key;
-    const certPem = pki.certificateToPem(cert);
-    const keyPem = pki.privateKeyToPem(key);
-
-    const fakeServer = new https.Server({
-      key: keyPem,
-      cert: certPem,
-      SNICallback: (sniHostname, done): void => {
-        void (async (): Promise<void> => {
-          const sniCertObj = await this.certAndKeyContainer.getCertPromise(sniHostname, port);
-          done(
-            null,
-            tls.createSecureContext({
-              key: pki.privateKeyToPem(sniCertObj.key),
-              cert: pki.certificateToPem(sniCertObj.cert),
-            }),
+    // Check if we are over limit
+    if (this.queue.length >= this.maxFakeServersCount) {
+      const serverToDelete = this.queue.shift();
+      if (serverToDelete)
+        if (serverToDelete.isRunning || serverToDelete.isLaunching) {
+          doNotWaitPromise(
+            serverToDelete.stop(),
+            `Stopping server for ${serverToDelete.mappingHostNames.join(',')}`,
+            this.logger,
           );
-        })();
-      },
-    });
+        }
+    }
 
-    this.fakeServers.add(fakeServer);
+    // Create new one
+    const newServer = new HttpsServer(
+      this.certAndKeyContainer,
+      this.logger,
+      hostname,
+      port,
+      this.requestHandler,
+      this.upgradeHandler,
+    );
 
-    const serverObj: ServerObject = {
-      cert: cert,
-      key: key,
-      server: fakeServer,
-      port: 0, // if port === 0, should listen server's `listening` event.
-    };
+    this.queue.push(newServer);
 
-    // eslint-disable-next-line no-param-reassign
-    serverPromiseObj.serverObj = serverObj;
+    doNotWaitPromise(newServer.run(), `Server launched for ${hostname}`, this.logger);
 
-    return new Promise<ServerObject>((resolve) => {
-      fakeServer.listen(0, () => {
-        const address = fakeServer.address() as AddressInfo;
-        serverObj.port = address.port;
-        logger(`Fake server created at port ${address.port}`);
-      });
-
-      fakeServer.on('request', (req, res) => {
-        logger(`New request received by fake-server: ${res.toString()}`);
-        const context = new Context(req, res, true);
-        this.requestHandler(context);
-      });
-
-      fakeServer.on('error', (e) => {
-        logger(`Error by fake-server: ${e.toString()}`);
-        logError(e);
-      });
-
-      fakeServer.on('listening', () => {
-        // eslint-disable-next-line no-param-reassign
-        serverPromiseObj.mappingHostNames = TlsUtils.getMappingHostNamesFormCert(certObj.cert);
-        resolve(serverObj);
-      });
-
-      fakeServer.on('connection', (socket: Socket) => {
-        this.serverSockets.add(socket);
-        socket.on('close', () => {
-          this.serverSockets.delete(socket);
-        });
-      });
-
-      fakeServer.on('upgrade', (req, socket, head) => {
-        const ssl = true;
-        this.upgradeHandler(req, socket, head, ssl);
-      });
-    });
+    return newServer;
   }
 
   private reRankServer(index: number): void {
@@ -169,13 +93,7 @@ export class FakeServersCenter {
   }
 
   public async close(): Promise<void> {
-    // Destroy all open sockets first
-    this.serverSockets.forEach((socket) => {
-      socket.destroy();
-    });
-    this.serverSockets = new Set();
-    for (const server of Array.from(this.fakeServers)) {
-      await promisify(server.close).call(server);
-    }
+    // Destroy all fake servers
+    await Promise.all(this.queue.map((server) => server.stop()));
   }
 }

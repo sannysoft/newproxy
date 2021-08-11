@@ -5,42 +5,34 @@ import { ErrorLoggingFn } from '../types/functions/error-logging-fn';
 
 const logger = Debug('newproxy');
 
-let loggerConfig: boolean | LoggingFn = false;
-let errorLoggerConfig: boolean | ErrorLoggingFn = false;
-
 type ColorFn = (str: string) => string;
 
-export function setLoggerConfig(value: boolean | LoggingFn): void {
-  loggerConfig = value;
-}
+export class Logger {
+  constructor(
+    private loggerConfig: boolean | LoggingFn = false,
+    private errorLoggerConfig: boolean | ErrorLoggingFn = false,
+  ) {}
 
-export function setErrorLoggerConfig(value: boolean | ErrorLoggingFn): void {
-  errorLoggerConfig = value;
-}
-
-export function log(message: string, colorFn?: ColorFn): void {
-  if (typeof loggerConfig === 'function') {
-    loggerConfig(message);
-  } else if (loggerConfig) {
-    const formattedMessage = colorFn?.(message) ?? message;
-    console.log(formattedMessage);
-  } else {
-    logger(message);
-  }
-}
-
-export function logError(message: Error | any, comment?: string): void {
-  let fullComment = comment ?? '';
-  if (fullComment !== '') fullComment += '  ';
-  if (typeof errorLoggerConfig === 'function') {
-    errorLoggerConfig(message, comment);
-  } else if (loggerConfig) {
-    if (message instanceof Error) {
-      console.error(fullComment, message);
-    } else {
-      log(message, chalk.red);
+  log(message: string, colorFn?: ColorFn): void {
+    if (typeof this.loggerConfig === 'function') {
+      this.loggerConfig(message);
+    } else if (this.loggerConfig) {
+      const formattedMessage = colorFn?.(message) ?? message;
+      logger(formattedMessage);
     }
-  } else {
-    logger(`Error: ${message}`);
+  }
+
+  logError(message: Error | any, comment?: string): void {
+    let fullComment = comment ?? '';
+    if (fullComment !== '') fullComment += '  ';
+    if (typeof this.errorLoggerConfig === 'function') {
+      this.errorLoggerConfig(message, comment);
+    } else if (this.loggerConfig) {
+      if (message instanceof Error) {
+        this.log(message.message);
+      } else {
+        this.log(message, chalk.red);
+      }
+    }
   }
 }

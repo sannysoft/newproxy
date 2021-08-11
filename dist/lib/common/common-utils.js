@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommonUtils = void 0;
 const url = require("url");
 const AgentKeepAlive = require("agentkeepalive");
-const logger_1 = require("./logger");
 const external_proxy_config_1 = require("../types/external-proxy-config");
 const contexts_1 = require("./contexts");
 const tunneling_agent_1 = require("./tunneling-agent");
@@ -18,7 +17,7 @@ const httpAgent = new AgentKeepAlive({
 });
 let socketId = 0;
 class CommonUtils {
-    static getOptionsFromRequest(context, proxyConfig) {
+    static getOptionsFromRequest(context, proxyConfig, logger) {
         var _a, _b, _c, _d, _e, _f, _g, _h;
         const urlObject = url.parse((_b = (_a = context.clientReq) === null || _a === void 0 ? void 0 : _a.url) !== null && _b !== void 0 ? _b : util_fns_1.makeErr('No URL set for the request'));
         const defaultPort = context.ssl ? 443 : 80;
@@ -31,7 +30,7 @@ class CommonUtils {
             context.externalProxy = externalProxyHelper === null || externalProxyHelper === void 0 ? void 0 : externalProxyHelper.getConfigObject();
         }
         catch (error) {
-            logger_1.logError(error, 'Wrong external proxy set');
+            logger.logError(error, 'Wrong external proxy set');
         }
         delete headers['proxy-connection'];
         delete headers['proxy-authorization'];
@@ -84,7 +83,7 @@ class CommonUtils {
             }
         }
         catch (error) {
-            logger_1.logError(error, 'External proxy parsing problem');
+            logger.logError(error, 'External proxy parsing problem');
         }
         // TODO: Check if we ever have customSocketId
         // mark a socketId for Agent to bind socket for NTLM

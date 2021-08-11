@@ -1,51 +1,40 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logError = exports.log = exports.setErrorLoggerConfig = exports.setLoggerConfig = void 0;
+exports.Logger = void 0;
 const chalk = require("chalk");
 const Debug = require("debug");
 const logger = Debug('newproxy');
-let loggerConfig = false;
-let errorLoggerConfig = false;
-function setLoggerConfig(value) {
-    loggerConfig = value;
-}
-exports.setLoggerConfig = setLoggerConfig;
-function setErrorLoggerConfig(value) {
-    errorLoggerConfig = value;
-}
-exports.setErrorLoggerConfig = setErrorLoggerConfig;
-function log(message, colorFn) {
-    var _a;
-    if (typeof loggerConfig === 'function') {
-        loggerConfig(message);
+class Logger {
+    constructor(loggerConfig = false, errorLoggerConfig = false) {
+        this.loggerConfig = loggerConfig;
+        this.errorLoggerConfig = errorLoggerConfig;
     }
-    else if (loggerConfig) {
-        const formattedMessage = (_a = colorFn === null || colorFn === void 0 ? void 0 : colorFn(message)) !== null && _a !== void 0 ? _a : message;
-        console.log(formattedMessage);
-    }
-    else {
-        logger(message);
-    }
-}
-exports.log = log;
-function logError(message, comment) {
-    let fullComment = comment !== null && comment !== void 0 ? comment : '';
-    if (fullComment !== '')
-        fullComment += '  ';
-    if (typeof errorLoggerConfig === 'function') {
-        errorLoggerConfig(message, comment);
-    }
-    else if (loggerConfig) {
-        if (message instanceof Error) {
-            console.error(fullComment, message);
+    log(message, colorFn) {
+        var _a;
+        if (typeof this.loggerConfig === 'function') {
+            this.loggerConfig(message);
         }
-        else {
-            log(message, chalk.red);
+        else if (this.loggerConfig) {
+            const formattedMessage = (_a = colorFn === null || colorFn === void 0 ? void 0 : colorFn(message)) !== null && _a !== void 0 ? _a : message;
+            logger(formattedMessage);
         }
     }
-    else {
-        logger(`Error: ${message}`);
+    logError(message, comment) {
+        let fullComment = comment !== null && comment !== void 0 ? comment : '';
+        if (fullComment !== '')
+            fullComment += '  ';
+        if (typeof this.errorLoggerConfig === 'function') {
+            this.errorLoggerConfig(message, comment);
+        }
+        else if (this.loggerConfig) {
+            if (message instanceof Error) {
+                this.log(message.message);
+            }
+            else {
+                this.log(message, chalk.red);
+            }
+        }
     }
 }
-exports.logError = logError;
+exports.Logger = Logger;
 //# sourceMappingURL=logger.js.map

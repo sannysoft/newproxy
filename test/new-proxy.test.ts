@@ -1,8 +1,6 @@
-import NewProxy from '../src/new-proxy';
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+import { NewProxyBuilder } from '../src/new-proxy-builder';
+import { NewProxy } from '../src/new-proxy';
+import { sleep } from '../src/utils/promises';
 
 /**
  * Dummy test
@@ -11,11 +9,11 @@ describe('Proxy test', () => {
   jest.setTimeout(5 * 60e3);
 
   it('NewProxy is instantiable', () => {
-    expect(new NewProxy({})).toBeInstanceOf(NewProxy);
+    expect(NewProxyBuilder.new().build()).toBeInstanceOf(NewProxy);
   });
 
-  it('', async () => {
-    const proxy = new NewProxy()
+  it('Run proxy & stop it', async () => {
+    const proxy = new NewProxyBuilder()
       .port(8800)
       .log(true)
       .sslMitm(() => false)
@@ -28,11 +26,11 @@ describe('Proxy test', () => {
           host: '127.0.0.1',
           port: 8888,
         };
-      });
+      })
+      .build();
 
     await proxy.run();
     await sleep(1000);
     await proxy.stop();
-    console.log(1);
   });
 });

@@ -2,20 +2,20 @@ import http from 'http';
 import https from 'https';
 import { UpgradeHandlerFn } from '../types/functions/upgrade-handler-fn';
 import { CommonUtils } from '../common/common-utils';
-import { logError } from '../common/logger';
 import { ProxyConfig } from '../types/proxy-config';
 import { Context } from '../types/contexts/context';
+import { Logger } from '../common/logger';
 
 // create connectHandler function
-export function createUpgradeHandler(proxyConfig: ProxyConfig): UpgradeHandlerFn {
+export function createUpgradeHandler(proxyConfig: ProxyConfig, logger: Logger): UpgradeHandlerFn {
   return function upgradeHandler(req, clientSocket, head, ssl): void {
     const context = new Context(req, undefined, false);
 
-    const clientOptions = CommonUtils.getOptionsFromRequest(context, proxyConfig);
+    const clientOptions = CommonUtils.getOptionsFromRequest(context, proxyConfig, logger);
     const proxyReq = (ssl ? https : http).request(clientOptions);
 
     proxyReq.on('error', (error) => {
-      logError(error);
+      logger.logError(error);
     });
 
     proxyReq.on('response', (res) => {
@@ -26,7 +26,7 @@ export function createUpgradeHandler(proxyConfig: ProxyConfig): UpgradeHandlerFn
 
     proxyReq.on('upgrade', (proxyRes, proxySocket, proxyHead) => {
       proxySocket.on('error', (error: Error) => {
-        logError(error);
+        logger.logError(error);
       });
 
       clientSocket.on('error', () => {

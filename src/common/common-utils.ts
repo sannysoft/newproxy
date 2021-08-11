@@ -1,7 +1,6 @@
 import * as url from 'url';
 import * as AgentKeepAlive from 'agentkeepalive';
 import { ExtendedRequestOptions } from '../types/request-options';
-import { logError } from './logger';
 import {
   ExternalProxyConfig,
   ExternalProxyHelper,
@@ -12,6 +11,7 @@ import { TunnelingAgent } from './tunneling-agent';
 import { makeErr } from './util-fns';
 import { Context } from '../types/contexts/context';
 import { ProxyConfig } from '../types/proxy-config';
+import { Logger } from './logger';
 
 const httpsAgent = new AgentKeepAlive.HttpsAgent({
   keepAlive: true,
@@ -29,6 +29,7 @@ export class CommonUtils {
   public static getOptionsFromRequest(
     context: Context,
     proxyConfig: ProxyConfig,
+    logger: Logger,
   ): ExtendedRequestOptions {
     const urlObject = url.parse(context.clientReq?.url ?? makeErr('No URL set for the request'));
     const defaultPort = context.ssl ? 443 : 80;
@@ -41,7 +42,7 @@ export class CommonUtils {
       // eslint-disable-next-line no-param-reassign
       context.externalProxy = externalProxyHelper?.getConfigObject();
     } catch (error) {
-      logError(error, 'Wrong external proxy set');
+      logger.logError(error, 'Wrong external proxy set');
     }
 
     delete headers['proxy-connection'];
@@ -105,7 +106,7 @@ export class CommonUtils {
         options.path = `http://${urlObject.host}${urlObject.path}`;
       }
     } catch (error) {
-      logError(error, 'External proxy parsing problem');
+      logger.logError(error, 'External proxy parsing problem');
     }
 
     // TODO: Check if we ever have customSocketId

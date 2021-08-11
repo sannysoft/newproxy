@@ -21,4 +21,3 @@ export interface ProxyConfig {
     caCertPath: string;
     caKeyPath: string;
 }
-export declare type UserProxyConfig = Partial<ProxyConfig>;

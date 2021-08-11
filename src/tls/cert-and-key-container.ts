@@ -4,7 +4,7 @@ import { PeerCertificate, TLSSocket } from 'tls';
 import { TlsUtils } from './tls-utils';
 import { CaPair } from '../types/ca-pair';
 import { CertPromise } from '../types/cert-promise';
-import { logError } from '../common/logger';
+import { Logger } from '../common/logger';
 
 export class CertAndKeyContainer {
   private queue: CertPromise[] = [];
@@ -15,7 +15,12 @@ export class CertAndKeyContainer {
 
   private readonly caPair: CaPair;
 
-  public constructor(maxLength = 1000, getCertSocketTimeout = 2 * 1000, caPair: CaPair) {
+  public constructor(
+    maxLength = 1000,
+    getCertSocketTimeout = 2 * 1000,
+    caPair: CaPair,
+    private logger: Logger,
+  ) {
     this.maxLength = maxLength;
     this.getCertSocketTimeout = getCertSocketTimeout;
     this.caPair = caPair;
@@ -80,7 +85,7 @@ export class CertAndKeyContainer {
               try {
                 certObj = TlsUtils.createFakeCertificateByCA(this.caPair, realCert);
               } catch (error) {
-                logError(error);
+                this.logger.logError(error);
               }
 
             if (!certObj) certObj = TlsUtils.createFakeCertificateByDomain(this.caPair, hostname);

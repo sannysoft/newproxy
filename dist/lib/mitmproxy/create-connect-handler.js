@@ -4,9 +4,9 @@ exports.createConnectHandler = void 0;
 const url = require("url");
 const net = require("net");
 const contexts_1 = require("../common/contexts");
-const logger_1 = require("../common/logger");
 const external_proxy_config_1 = require("../types/external-proxy-config");
 const util_fns_1 = require("../common/util-fns");
+const promises_1 = require("../utils/promises");
 const localIP = '127.0.0.1';
 function connect(context, hostname, port) {
     // tunneling https
@@ -29,7 +29,7 @@ function connect(context, hostname, port) {
     });
     return proxySocket;
 }
-function connectNoMitmExternalProxy(proxyHelper, context, hostname, port) {
+function connectNoMitmExternalProxy(proxyHelper, context, hostname, port, logger) {
     const proxySocket = net.connect(Number(proxyHelper.getUrlObject().port), proxyHelper.getUrlObject().hostname, () => {
         proxySocket.write(`CONNECT ${hostname}:${port} HTTP/${context.connectRequest.httpVersion}\r\n`);
         ['host', 'user-agent', 'proxy-connection'].forEach((name) => {
@@ -47,11 +47,11 @@ function connectNoMitmExternalProxy(proxyHelper, context, hostname, port) {
         context.clientSocket.pipe(proxySocket);
     });
     proxySocket.on('error', (e) => {
-        logger_1.logError(e);
+        logger.logError(e);
     });
     return proxySocket;
 }
-function createConnectHandler(proxyConfig, fakeServerCenter) {
+function createConnectHandler(proxyConfig, fakeServerCenter, logger) {
     // return
     return function connectHandler(context) {
         var _a;
@@ -64,7 +64,7 @@ function createConnectHandler(proxyConfig, fakeServerCenter) {
                     proxyConfig.sslMitm === true;
         }
         catch (error) {
-            logger_1.logError(error, 'Error at sslMitm function');
+            logger.logError(error, 'Error at sslMitm function');
         }
         if (!context.clientSocket.writable)
             return;
@@ -82,21 +82,17 @@ function createConnectHandler(proxyConfig, fakeServerCenter) {
                 }
             });
             if (externalProxy) {
-                connectNoMitmExternalProxy(new external_proxy_config_1.ExternalProxyHelper(externalProxy), context, serverHostname, serverPort);
+                connectNoMitmExternalProxy(new external_proxy_config_1.ExternalProxyHelper(externalProxy), context, serverHostname, serverPort, logger);
                 return;
             }
             connect(context, serverHostname, serverPort);
             return;
         }
-        void (async () => {
-            try {
-                const serverObject = await fakeServerCenter.getServerPromise(serverHostname, serverPort);
-                connect(context, localIP, serverObject.port);
-            }
-            catch (error) {
-                logger_1.logError(error);
-            }
-        })();
+        promises_1.doNotWaitPromise((async () => {
+            const server = fakeServerCenter.getFakeServer(serverHostname, serverPort);
+            await server.run();
+            connect(context, localIP, server.listenPort);
+        })(), `Connect to fake server failed for ${serverHostname}`, logger);
     };
 }
 exports.createConnectHandler = createConnectHandler;

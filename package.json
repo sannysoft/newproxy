@@ -1,6 +1,6 @@
 {
   "name": "newproxy",
-  "version": "2.0.3",
+  "version": "2.1.0",
   "description": "HTTP/HTTPS Proxy server with overrides & MITM support",
   "keywords": [],
   "main": "dist/lib/index.js",

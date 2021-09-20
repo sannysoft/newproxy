@@ -30,10 +30,8 @@ const proxy = NewProxyBuilder.new()
 
     return null;
   })
-  .responseInterceptor((clientReq, clientRes, proxyReq, proxyRes, ssl, next) => {
+  .responseInterceptor(async (clientReq, clientRes, proxyReq, proxyRes, ssl) => {
     if (clientReq['external_proxy'] === 1) proxyRes.headers['external_proxy'] = '1';
-
-    next();
   })
   .build();
 

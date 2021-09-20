@@ -1,0 +1,2 @@
+2.1.0
+  - request & response interceptor functions should now return Promise instead of calling next

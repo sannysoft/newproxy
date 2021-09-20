@@ -8,7 +8,7 @@ const proxy = NewProxyBuilder.new()
     console.error(error);
   })
   .sslMitm(() => true)
-  .requestInterceptor((rOptions, clientReq, clientRes, ssl, next) => {
+  .requestInterceptor(async (rOptions, clientReq, clientRes, ssl) => {
     clientReq.setTimeout(30000); // Set request timeout to 10 seconds
 
     const url = rOptions.url || `${rOptions.protocol}//${rOptions.hostname}:${rOptions.port}`;
@@ -21,10 +21,8 @@ const proxy = NewProxyBuilder.new()
       // If we call clientRes.end and close client socket in request interception
       // then no other actions are performed
     }
-
-    next();
   })
-  .responseInterceptor((clientReq, clientRes, proxyReq, proxyRes, ssl, next) => {
+  .responseInterceptor(async (clientReq, clientRes, proxyReq, proxyRes, ssl) => {
     // proxyRes will be piped to clientRes, we can change proxyRes or write to clientRes directly here
     proxyRes.headers['test_header'] = 'test';
 
@@ -33,8 +31,6 @@ const proxy = NewProxyBuilder.new()
       clientRes.statusCode = 404;
       clientRes.end('NO REDIRECTS HERE');
     }
-
-    next();
   })
   .build();
 

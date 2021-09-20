@@ -10,10 +10,9 @@ const proxy = NewProxyBuilder.new()
     }
     return true;
   })
-  .responseInterceptor((clientReq, clientRes, proxyReq, proxyRes, ssl, next) => {
+  .responseInterceptor((clientReq, clientRes, proxyReq, proxyRes, ssl) => {
     // proxyRes will be piped to clientRes, we can change proxyRes or write to clientRes directly here
     proxyRes.headers['mitm'] = '1';
-    next();
   }).build;
 
 process.once('SIGTERM', async (code) => {

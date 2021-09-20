@@ -7,5 +7,4 @@ export type RequestInterceptorFn = (
   clientRes: http.ServerResponse,
   ssl: boolean,
   connectRequest: http.IncomingMessage | undefined,
-  next: () => void,
-) => void;
+) => Promise<void>;

@@ -41,7 +41,7 @@ export class RequestHandler {
       `Request handler called for request (ssl=${this.context.ssl}) ${this.req.toString()}`,
     );
 
-    if (this.res.finished) {
+    if (this.res.writableEnded) {
       return;
     }
 
@@ -52,7 +52,7 @@ export class RequestHandler {
         await this.interceptRequest();
       } catch (error) {
         this.logger.logError(error, 'Problem at request interception');
-        if (!this.res.finished) {
+        if (!this.res.writableEnded) {
           this.context.setStatusCode(502);
           this.res.writeHead(502);
           this.res.write(`Proxy Warning:\r\n\r\n${error.toString()}`);
@@ -60,7 +60,7 @@ export class RequestHandler {
         }
       }
 
-      if (this.res.finished) {
+      if (this.res.writableEnded) {
         return;
       }
 
@@ -74,7 +74,7 @@ export class RequestHandler {
         );
       } catch (error) {
         this.logger.logError(error, 'Problem at request processing');
-        if (this.res.finished) {
+        if (this.res.writableEnded) {
           return;
         }
 
@@ -90,7 +90,7 @@ export class RequestHandler {
         this.res.end();
       }
 
-      if (this.res.finished) {
+      if (this.res.writableEnded) {
         return;
       }
 
@@ -98,20 +98,20 @@ export class RequestHandler {
         await this.interceptResponse();
       } catch (error) {
         this.logger.logError(error, 'Problem with response interception');
-        if (!this.res.finished) {
+        if (!this.res.writableEnded) {
           this.res.writeHead(500);
           this.res.write(`Proxy Warning:\r\n\r\n${error.toString()}`);
           this.res.end();
         }
       }
 
-      if (this.res.finished) {
+      if (this.res.writableEnded) {
         return;
       }
 
       this.sendHeadersAndPipe();
     } catch (error) {
-      if (!this.res.finished) {
+      if (!this.res.writableEnded) {
         if (!this.res.headersSent) this.res.writeHead(500);
         this.res.write(`Proxy Warning:\r\n\r\n ${error.toString()}`);
         this.res.end();
@@ -237,56 +237,31 @@ export class RequestHandler {
     });
   }
 
-  private interceptRequest(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const next = (): void => {
-        resolve();
-      };
-
-      try {
-        if (typeof this.proxyConfig.requestInterceptor === 'function') {
-          const connectKey = `${this.req.socket.remotePort}:${this.req.socket.localPort}`;
-          this.proxyConfig.requestInterceptor.call(
-            null,
-            this.rOptions,
-            this.req,
-            this.res,
-            this.context.ssl,
-            contexts[connectKey]?.connectRequest,
-            next,
-          );
-        } else {
-          resolve();
-        }
-      } catch (error) {
-        reject(error);
-      }
-    });
+  private async interceptRequest(): Promise<void> {
+    if (typeof this.proxyConfig.requestInterceptor === 'function') {
+      const connectKey = `${this.req.socket.remotePort}:${this.req.socket.localPort}`;
+      await this.proxyConfig.requestInterceptor.call(
+        null,
+        this.rOptions,
+        this.req,
+        this.res,
+        this.context.ssl,
+        contexts[connectKey]?.connectRequest,
+      );
+    }
   }
 
-  private interceptResponse(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const next = (): void => {
-        resolve();
-      };
-      try {
-        if (typeof this.proxyConfig.responseInterceptor === 'function') {
-          this.proxyConfig.responseInterceptor.call(
-            null,
-            this.req,
-            this.res,
-            this.proxyReq ?? makeErr('No proxyReq'),
-            this.proxyRes ?? makeErr('No proxyRes'),
-            this.context.ssl,
-            next,
-          );
-        } else {
-          resolve();
-        }
-      } catch (error) {
-        reject(error);
-      }
-    });
+  private async interceptResponse(): Promise<void> {
+    if (typeof this.proxyConfig.responseInterceptor === 'function') {
+      await this.proxyConfig.responseInterceptor.call(
+        null,
+        this.req,
+        this.res,
+        this.proxyReq ?? makeErr('No proxyReq'),
+        this.proxyRes ?? makeErr('No proxyRes'),
+        this.context.ssl,
+      );
+    }
   }
 
   private setKeepAlive(): void {

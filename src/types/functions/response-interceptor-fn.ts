@@ -6,5 +6,4 @@ export type ResponseInterceptorFn = (
   proxyReq: http.ClientRequest,
   proxyRes: http.IncomingMessage,
   ssl: boolean,
-  next: () => void,
-) => void;
+) => Promise<void>;

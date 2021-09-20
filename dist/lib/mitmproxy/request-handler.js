@@ -24,7 +24,7 @@ class RequestHandler {
     async go() {
         var _a;
         internalLogger(`Request handler called for request (ssl=${this.context.ssl}) ${this.req.toString()}`);
-        if (this.res.finished) {
+        if (this.res.writableEnded) {
             return;
         }
         this.setKeepAlive();
@@ -34,14 +34,14 @@ class RequestHandler {
             }
             catch (error) {
                 this.logger.logError(error, 'Problem at request interception');
-                if (!this.res.finished) {
+                if (!this.res.writableEnded) {
                     this.context.setStatusCode(502);
                     this.res.writeHead(502);
                     this.res.write(`Proxy Warning:\r\n\r\n${error.toString()}`);
                     this.res.end();
                 }
             }
-            if (this.res.finished) {
+            if (this.res.writableEnded) {
                 return;
             }
             try {
@@ -51,7 +51,7 @@ class RequestHandler {
             }
             catch (error) {
                 this.logger.logError(error, 'Problem at request processing');
-                if (this.res.finished) {
+                if (this.res.writableEnded) {
                     return;
                 }
                 if (error instanceof request_timeout_error_1.RequestTimeoutError) {
@@ -65,7 +65,7 @@ class RequestHandler {
                 this.res.write(`Proxy Error:\r\n\r\n${error.toString()}`);
                 this.res.end();
             }
-            if (this.res.finished) {
+            if (this.res.writableEnded) {
                 return;
             }
             try {
@@ -73,19 +73,19 @@ class RequestHandler {
             }
             catch (error) {
                 this.logger.logError(error, 'Problem with response interception');
-                if (!this.res.finished) {
+                if (!this.res.writableEnded) {
                     this.res.writeHead(500);
                     this.res.write(`Proxy Warning:\r\n\r\n${error.toString()}`);
                     this.res.end();
                 }
             }
-            if (this.res.finished) {
+            if (this.res.writableEnded) {
                 return;
             }
             this.sendHeadersAndPipe();
         }
         catch (error) {
-            if (!this.res.finished) {
+            if (!this.res.writableEnded) {
                 if (!this.res.headersSent)
                     this.res.writeHead(500);
                 this.res.write(`Proxy Warning:\r\n\r\n ${error.toString()}`);
@@ -191,44 +191,18 @@ class RequestHandler {
             onFree();
         });
     }
-    interceptRequest() {
-        return new Promise((resolve, reject) => {
-            var _a;
-            const next = () => {
-                resolve();
-            };
-            try {
-                if (typeof this.proxyConfig.requestInterceptor === 'function') {
-                    const connectKey = `${this.req.socket.remotePort}:${this.req.socket.localPort}`;
-                    this.proxyConfig.requestInterceptor.call(null, this.rOptions, this.req, this.res, this.context.ssl, (_a = contexts_1.contexts[connectKey]) === null || _a === void 0 ? void 0 : _a.connectRequest, next);
-                }
-                else {
-                    resolve();
-                }
-            }
-            catch (error) {
-                reject(error);
-            }
-        });
+    async interceptRequest() {
+        var _a;
+        if (typeof this.proxyConfig.requestInterceptor === 'function') {
+            const connectKey = `${this.req.socket.remotePort}:${this.req.socket.localPort}`;
+            await this.proxyConfig.requestInterceptor.call(null, this.rOptions, this.req, this.res, this.context.ssl, (_a = contexts_1.contexts[connectKey]) === null || _a === void 0 ? void 0 : _a.connectRequest);
+        }
     }
-    interceptResponse() {
-        return new Promise((resolve, reject) => {
-            var _a, _b;
-            const next = () => {
-                resolve();
-            };
-            try {
-                if (typeof this.proxyConfig.responseInterceptor === 'function') {
-                    this.proxyConfig.responseInterceptor.call(null, this.req, this.res, (_a = this.proxyReq) !== null && _a !== void 0 ? _a : util_fns_1.makeErr('No proxyReq'), (_b = this.proxyRes) !== null && _b !== void 0 ? _b : util_fns_1.makeErr('No proxyRes'), this.context.ssl, next);
-                }
-                else {
-                    resolve();
-                }
-            }
-            catch (error) {
-                reject(error);
-            }
-        });
+    async interceptResponse() {
+        var _a, _b;
+        if (typeof this.proxyConfig.responseInterceptor === 'function') {
+            await this.proxyConfig.responseInterceptor.call(null, this.req, this.res, (_a = this.proxyReq) !== null && _a !== void 0 ? _a : util_fns_1.makeErr('No proxyReq'), (_b = this.proxyRes) !== null && _b !== void 0 ? _b : util_fns_1.makeErr('No proxyRes'), this.context.ssl);
+        }
     }
     setKeepAlive() {
         var _a;

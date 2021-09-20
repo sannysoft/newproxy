@@ -3,7 +3,7 @@ const cache = {};
 
 const proxy = NewProxyBuilder.new()
   .sslMitm(true)
-  .requestInterceptor((rOptions, clientReq, clientRes, ssl, next) => {
+  .requestInterceptor(async (rOptions, clientReq, clientRes, ssl) => {
     clientReq.fullUrl = rOptions.url;
 
     if (rOptions.method === 'GET') {
@@ -23,10 +23,8 @@ const proxy = NewProxyBuilder.new()
         clientRes.end(c.body);
       }
     }
-
-    next();
   })
-  .responseInterceptor((clientReq, clientRes, proxyReq, proxyRes, ssl, next) => {
+  .responseInterceptor(async (clientReq, clientRes, proxyReq, proxyRes, ssl) => {
     const url = clientReq.fullUrl;
 
     // Send headers and status code

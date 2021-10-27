@@ -1,16 +1,16 @@
-import http, { Agent, ClientRequest, IncomingMessage, ServerResponse } from "http";
-import https from "https";
-import Debug from "debug";
-import net from "net";
-import { CommonUtils } from "../common/common-utils";
-import { ProxyConfig } from "../types/proxy-config";
-import { ExtendedRequestOptions } from "../types/request-options";
-import { contexts } from "../common/contexts";
-import { makeErr } from "../common/util-fns";
-import { RequestTimeoutError } from "../errors/request-timeout-error";
-import { Context } from "../types/contexts/context";
-import { isPresent } from "../types/types";
-import { Logger } from "../common/logger";
+import http, { Agent, ClientRequest, IncomingMessage, ServerResponse } from 'http';
+import https from 'https';
+import Debug from 'debug';
+import net from 'net';
+import { CommonUtils } from '../common/common-utils';
+import { ProxyConfig } from '../types/proxy-config';
+import { ExtendedRequestOptions } from '../types/request-options';
+import { contexts } from '../common/contexts';
+import { makeErr } from '../common/util-fns';
+import { RequestTimeoutError } from '../errors/request-timeout-error';
+import { Context } from '../types/contexts/context';
+import { isPresent } from '../types/types';
+import { Logger } from '../common/logger';
 
 const internalLogger = Debug('newproxy:requestHandler');
 

@@ -1,13 +1,13 @@
-import forge from "node-forge";
-import fs from "fs";
-import { CertAndKeyContainer } from "./cert-and-key-container";
-import { CaPair } from "../types/ca-pair";
-import { UpgradeHandlerFn } from "../types/functions/upgrade-handler-fn";
-import { RequestHandlerFn } from "../types/functions/request-handler-fn";
-import { Logger } from "../common/logger";
-import { ProxyConfig } from "../types/proxy-config";
-import { HttpsServer } from "./https-server";
-import { doNotWaitPromise } from "../utils/promises";
+import forge from 'node-forge';
+import fs from 'fs';
+import { CertAndKeyContainer } from './cert-and-key-container';
+import { CaPair } from '../types/ca-pair';
+import { UpgradeHandlerFn } from '../types/functions/upgrade-handler-fn';
+import { RequestHandlerFn } from '../types/functions/request-handler-fn';
+import { Logger } from '../common/logger';
+import { ProxyConfig } from '../types/proxy-config';
+import { HttpsServer } from './https-server';
+import { doNotWaitPromise } from '../utils/promises';
 
 export class FakeServersCenter {
   private queue: HttpsServer[] = [];

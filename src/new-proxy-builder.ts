@@ -1,17 +1,17 @@
-import chalk from "chalk";
-import { ProxyConfig } from "./types/proxy-config";
-import { TlsUtils } from "./tls/tls-utils";
-import { caConfig } from "./common/ca-config";
-import { SslMitmFn } from "./types/functions/ssl-connect-interceptor";
-import { RequestInterceptorFn } from "./types/functions/request-interceptor-fn";
-import { ResponseInterceptorFn } from "./types/functions/response-interceptor-fn";
-import { LoggingFn } from "./types/functions/log-fn";
-import { StatusFn } from "./types/functions/status-fn";
-import { ErrorLoggingFn } from "./types/functions/error-logging-fn";
-import { ExternalProxyConfig } from "./types/external-proxy-config";
-import { ExternalProxyFn, ExternalProxyNoMitmFn } from "./types/functions/external-proxy-fn";
-import { Logger } from "./common/logger";
-import { NewProxy } from "./new-proxy";
+import chalk from 'chalk';
+import { ProxyConfig } from './types/proxy-config';
+import { TlsUtils } from './tls/tls-utils';
+import { caConfig } from './common/ca-config';
+import { SslMitmFn } from './types/functions/ssl-connect-interceptor';
+import { RequestInterceptorFn } from './types/functions/request-interceptor-fn';
+import { ResponseInterceptorFn } from './types/functions/response-interceptor-fn';
+import { LoggingFn } from './types/functions/log-fn';
+import { StatusFn } from './types/functions/status-fn';
+import { ErrorLoggingFn } from './types/functions/error-logging-fn';
+import { ExternalProxyConfig } from './types/external-proxy-config';
+import { ExternalProxyFn, ExternalProxyNoMitmFn } from './types/functions/external-proxy-fn';
+import { Logger } from './common/logger';
+import { NewProxy } from './new-proxy';
 
 export class NewProxyBuilder {
   private config: Partial<ProxyConfig> = {

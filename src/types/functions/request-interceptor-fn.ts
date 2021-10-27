@@ -1,5 +1,5 @@
-import http from "http";
-import { ExtendedRequestOptions } from "../request-options";
+import http from 'http';
+import { ExtendedRequestOptions } from '../request-options';
 
 export type RequestInterceptorFn = (
   requestOptions: ExtendedRequestOptions,

@@ -1,17 +1,17 @@
-import url from "url";
-import AgentKeepAlive from "agentkeepalive";
-import { ExtendedRequestOptions } from "../types/request-options";
+import url from 'url';
+import AgentKeepAlive from 'agentkeepalive';
+import { ExtendedRequestOptions } from '../types/request-options';
 import {
   ExternalProxyConfig,
   ExternalProxyHelper,
   isExternalProxyConfigObject,
-} from "../types/external-proxy-config";
-import { contexts } from "./contexts";
-import { TunnelingAgent } from "./tunneling-agent";
-import { makeErr } from "./util-fns";
-import { Context } from "../types/contexts/context";
-import { ProxyConfig } from "../types/proxy-config";
-import { Logger } from "./logger";
+} from '../types/external-proxy-config';
+import { contexts } from './contexts';
+import { TunnelingAgent } from './tunneling-agent';
+import { makeErr } from './util-fns';
+import { Context } from '../types/contexts/context';
+import { ProxyConfig } from '../types/proxy-config';
+import { Logger } from './logger';
 
 const httpsAgent = new AgentKeepAlive.HttpsAgent({
   keepAlive: true,

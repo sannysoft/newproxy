@@ -13,10 +13,10 @@ JS Proxy library with support for request/response rewriting, optional SSL MITM 
 npm i newproxy
 ```
 
-###Usage
+### Usage
 
 ```js
-import { NewProxyBuilder}  from 'newproxy';
+import { NewProxyBuilder }  from 'newproxy';
 
 const proxy = NewProxyBuilder.new()
   .sslMitm((req, clientSocket, head) => true)

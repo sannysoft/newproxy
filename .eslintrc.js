@@ -2,7 +2,7 @@ module.exports = {
   parserOptions: {
     project: 'tsconfig.json',
   },
-  plugins: ['@typescript-eslint', 'jest', 'unicorn', 'prettier'],
+  plugins: ['@typescript-eslint', 'jest', 'unicorn', 'prettier', 'import'],
   extends: ['airbnb-typescript/base', 'prettier'],
   env: {
     node: true,
@@ -15,9 +15,8 @@ module.exports = {
     'prefer-arrow-callback': 'off',
     '@typescript-eslint/explicit-function-return-type': ['error'],
     '@typescript-eslint/no-inferrable-types': 'off',
-    '@typescript-eslint/no-unused-vars': 'off',
+    '@typescript-eslint/no-unused-vars': 'warn',
     '@typescript-eslint/ban-ts-comment': 'off',
-    '@typescript-eslint/no-unused-vars-experimental': 'warn',
     '@typescript-eslint/dot-notation': [
       'error',
       {

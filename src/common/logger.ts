@@ -1,7 +1,7 @@
-import * as chalk from 'chalk';
-import * as Debug from 'debug';
-import { LoggingFn } from '../types/functions/log-fn';
-import { ErrorLoggingFn } from '../types/functions/error-logging-fn';
+import chalk from "chalk";
+import Debug from "debug";
+import { LoggingFn } from "../types/functions/log-fn";
+import { ErrorLoggingFn } from "../types/functions/error-logging-fn";
 
 const logger = Debug('newproxy');
 

@@ -1,16 +1,16 @@
-import * as url from 'url';
-import * as net from 'net';
-import { FakeServersCenter } from '../tls/fake-servers-center';
-import { contexts } from '../common/contexts';
-import { ExtendedNetSocket } from '../types/extended-net-socket';
-import { ConnectHandlerFn } from '../types/functions/connect-handler-fn';
-import { Logger } from '../common/logger';
-import { ProxyConfig } from '../types/proxy-config';
-import { ExternalProxyHelper, ExternalProxyConfigOrNull } from '../types/external-proxy-config';
-import { makeErr } from '../common/util-fns';
-import { ContextNoMitm } from '../types/contexts/context-no-mitm';
-import { HttpsServer } from '../tls/https-server';
-import { doNotWaitPromise } from '../utils/promises';
+import url from "url";
+import net from "net";
+import { FakeServersCenter } from "../tls/fake-servers-center";
+import { contexts } from "../common/contexts";
+import { ExtendedNetSocket } from "../types/extended-net-socket";
+import { ConnectHandlerFn } from "../types/functions/connect-handler-fn";
+import { Logger } from "../common/logger";
+import { ProxyConfig } from "../types/proxy-config";
+import { ExternalProxyConfigOrNull, ExternalProxyHelper } from "../types/external-proxy-config";
+import { makeErr } from "../common/util-fns";
+import { ContextNoMitm } from "../types/contexts/context-no-mitm";
+import { HttpsServer } from "../tls/https-server";
+import { doNotWaitPromise } from "../utils/promises";
 
 const localIP = '127.0.0.1';
 
@@ -153,10 +153,18 @@ export function createConnectHandler(
 
     doNotWaitPromise(
       (async (): Promise<void> => {
-        const server: HttpsServer = fakeServerCenter.getFakeServer(serverHostname, serverPort);
-        await server.run();
+        try {
+          const server: HttpsServer = fakeServerCenter.getFakeServer(serverHostname, serverPort);
+          await server.run();
 
-        connect(context, localIP, server.listenPort!, socketsList);
+          if (!server.listenPort) {
+            context.clientSocket.end();
+            throw new Error('SSL proxy is not listening');
+          }
+
+          connect(context, localIP, server.listenPort!, socketsList);
+        } finally {
+        }
       })(),
       `Connect to fake server failed for ${serverHostname}`,
       logger,

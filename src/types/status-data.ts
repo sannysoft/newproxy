@@ -1,5 +1,5 @@
-import * as http from 'http';
-import { ExternalProxyConfigObject } from './external-proxy-config';
+import http from "http";
+import { ExternalProxyConfigObject } from "./external-proxy-config";
 
 export class StatusData {
   public request: http.IncomingMessage;

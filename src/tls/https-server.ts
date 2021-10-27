@@ -1,13 +1,14 @@
-import * as https from 'https';
-import * as tls from 'tls';
-import * as forge from 'node-forge';
-import { AddressInfo, Socket } from 'net';
-import { CertAndKeyContainer } from './cert-and-key-container';
-import { Context } from '../types/contexts/context';
-import { TlsUtils } from './tls-utils';
-import { Logger } from '../common/logger';
-import { RequestHandlerFn } from '../types/functions/request-handler-fn';
-import { UpgradeHandlerFn } from '../types/functions/upgrade-handler-fn';
+import https from "https";
+import tls from "tls";
+import forge from "node-forge";
+import { AddressInfo, Socket } from "net";
+import { CertAndKeyContainer } from "./cert-and-key-container";
+import { Context } from "../types/contexts/context";
+import { TlsUtils } from "./tls-utils";
+import { Logger } from "../common/logger";
+import { RequestHandlerFn } from "../types/functions/request-handler-fn";
+import { UpgradeHandlerFn } from "../types/functions/upgrade-handler-fn";
+import { sleep } from "../utils/promises";
 
 const pki = forge.pki;
 
@@ -15,6 +16,8 @@ export class HttpsServer {
   private fakeServer?: https.Server;
 
   private _launching: boolean = false;
+
+  private _launchPromise?: Promise<any>;
 
   get isLaunching(): boolean {
     return this._launching;
@@ -64,9 +67,21 @@ export class HttpsServer {
   }
 
   public async run(): Promise<HttpsServer> {
-    if (this._running || this._launching) {
+    if (this._running) {
       return this;
     }
+
+    if (this.isLaunching) {
+      // Launching already
+      while (this._launching) {
+        if (this._launchPromise) {
+          await this._launchPromise;
+        }
+        await sleep(100);
+      }
+      return this;
+    }
+
     if (this._stopped) {
       throw new Error('Server is stopped already');
     }
@@ -101,7 +116,7 @@ export class HttpsServer {
       },
     });
 
-    await new Promise<void>((resolve, reject) => {
+    this._launchPromise = new Promise<void>((resolve, reject) => {
       const fakeServer = this.fakeServer!;
 
       fakeServer.once('error', (error: Error) => {
@@ -143,6 +158,13 @@ export class HttpsServer {
         this.upgradeHandler(req, socket, head, ssl);
       });
     });
+
+    try {
+      await this._launchPromise;
+    } finally {
+      this._launchPromise = undefined;
+      this._launching = false;
+    }
 
     return this;
   }

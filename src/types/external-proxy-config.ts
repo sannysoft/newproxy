@@ -1,6 +1,6 @@
-import * as url from 'url';
-import { isNullOrUndefined, makeErr } from '../common/util-fns';
-import { isString, types } from './types';
+import url from "url";
+import { isNullOrUndefined, makeErr } from "../common/util-fns";
+import { isString, types } from "./types";
 
 export interface ExternalProxyConfigObject {
   host: string;

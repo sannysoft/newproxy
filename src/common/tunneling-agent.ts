@@ -1,8 +1,8 @@
 // @ts-ignore
-import * as TunnelAgent from '@postman/tunnel-agent';
-import HashCode from 'ts-hashcode';
-import * as NodeCache from 'node-cache';
-import { ExternalProxyHelper } from '../types/external-proxy-config';
+import * as TunnelAgent from "@postman/tunnel-agent";
+import HashCode from "ts-hashcode";
+import NodeCache from "node-cache";
+import { ExternalProxyHelper } from "../types/external-proxy-config";
 
 const myCache = new NodeCache({ stdTTL: 15 * 60, checkperiod: 60, useClones: false });
 

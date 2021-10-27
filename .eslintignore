@@ -2,3 +2,8 @@
 /dist
 /node_modules
 /lib
+rollup.config.js
+.eslintrc.js
+prettier.config.js
+/examples
+/test

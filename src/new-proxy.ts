@@ -1,19 +1,19 @@
-import * as http from 'http';
-import * as stream from 'stream';
-import * as chalk from 'chalk';
-import { Socket } from 'net';
-import { ProxyConfig } from './types/proxy-config';
-import { createUpgradeHandler } from './mitmproxy/create-upgrade-handler';
-import { createConnectHandler } from './mitmproxy/create-connect-handler';
-import { createRequestHandler } from './mitmproxy/create-request-handler';
-import { RequestHandlerFn } from './types/functions/request-handler-fn';
-import { UpgradeHandlerFn } from './types/functions/upgrade-handler-fn';
-import { ConnectHandlerFn } from './types/functions/connect-handler-fn';
-import { FakeServersCenter } from './tls/fake-servers-center';
-import { Context } from './types/contexts/context';
-import { ContextNoMitm } from './types/contexts/context-no-mitm';
-import { Logger } from './common/logger';
-import { ExtendedNetSocket } from './types/extended-net-socket';
+import http from "http";
+import stream from "stream";
+import chalk from "chalk";
+import { Socket } from "net";
+import { ProxyConfig } from "./types/proxy-config";
+import { createUpgradeHandler } from "./mitmproxy/create-upgrade-handler";
+import { createConnectHandler } from "./mitmproxy/create-connect-handler";
+import { createRequestHandler } from "./mitmproxy/create-request-handler";
+import { RequestHandlerFn } from "./types/functions/request-handler-fn";
+import { UpgradeHandlerFn } from "./types/functions/upgrade-handler-fn";
+import { ConnectHandlerFn } from "./types/functions/connect-handler-fn";
+import { FakeServersCenter } from "./tls/fake-servers-center";
+import { Context } from "./types/contexts/context";
+import { ContextNoMitm } from "./types/contexts/context-no-mitm";
+import { Logger } from "./common/logger";
+import { ExtendedNetSocket } from "./types/extended-net-socket";
 
 export class NewProxy {
   public readonly httpServer: http.Server = new http.Server();

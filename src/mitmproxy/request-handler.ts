@@ -1,17 +1,16 @@
-import { Agent, ClientRequest, IncomingMessage, ServerResponse } from 'http';
-import * as http from 'http';
-import * as https from 'https';
-import * as Debug from 'debug';
-import * as net from 'net';
-import { CommonUtils } from '../common/common-utils';
-import { ProxyConfig } from '../types/proxy-config';
-import { ExtendedRequestOptions } from '../types/request-options';
-import { contexts } from '../common/contexts';
-import { makeErr } from '../common/util-fns';
-import { RequestTimeoutError } from '../errors/request-timeout-error';
-import { Context } from '../types/contexts/context';
-import { isPresent } from '../types/types';
-import { Logger } from '../common/logger';
+import http, { Agent, ClientRequest, IncomingMessage, ServerResponse } from "http";
+import https from "https";
+import Debug from "debug";
+import net from "net";
+import { CommonUtils } from "../common/common-utils";
+import { ProxyConfig } from "../types/proxy-config";
+import { ExtendedRequestOptions } from "../types/request-options";
+import { contexts } from "../common/contexts";
+import { makeErr } from "../common/util-fns";
+import { RequestTimeoutError } from "../errors/request-timeout-error";
+import { Context } from "../types/contexts/context";
+import { isPresent } from "../types/types";
+import { Logger } from "../common/logger";
 
 const internalLogger = Debug('newproxy:requestHandler');
 
@@ -55,7 +54,7 @@ export class RequestHandler {
         if (!this.res.writableEnded) {
           this.context.setStatusCode(502);
           this.res.writeHead(502);
-          this.res.write(`Proxy Warning:\r\n\r\n${error.toString()}`);
+          this.res.write(`Proxy Warning:\r\n\r\n${error}`);
           this.res.end();
         }
       }
@@ -86,7 +85,7 @@ export class RequestHandler {
           this.res.writeHead(502);
         }
 
-        this.res.write(`Proxy Error:\r\n\r\n${error.toString()}`);
+        this.res.write(`Proxy Error:\r\n\r\n${error}`);
         this.res.end();
       }
 
@@ -100,7 +99,7 @@ export class RequestHandler {
         this.logger.logError(error, 'Problem with response interception');
         if (!this.res.writableEnded) {
           this.res.writeHead(500);
-          this.res.write(`Proxy Warning:\r\n\r\n${error.toString()}`);
+          this.res.write(`Proxy Warning:\r\n\r\n${error}`);
           this.res.end();
         }
       }
@@ -113,7 +112,7 @@ export class RequestHandler {
     } catch (error) {
       if (!this.res.writableEnded) {
         if (!this.res.headersSent) this.res.writeHead(500);
-        this.res.write(`Proxy Warning:\r\n\r\n ${error.toString()}`);
+        this.res.write(`Proxy Warning:\r\n\r\n ${error}`);
         this.res.end();
       }
 
@@ -162,7 +161,7 @@ export class RequestHandler {
         internalLogger('Start piping');
         proxyRes.pipe(this.res);
       } catch (error) {
-        internalLogger(`Piping error: ${error.message}`);
+        internalLogger(`Piping error: ${error}`);
       }
   }
 

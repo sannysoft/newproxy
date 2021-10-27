@@ -1,5 +1,5 @@
-import * as http from 'http';
-import stream from 'stream';
+import http from "http";
+import stream from "stream";
 
 export type SslMitmFn = (
   req: http.IncomingMessage,

@@ -1,11 +1,11 @@
-import * as forge from 'node-forge';
-import * as mkdirp from 'mkdirp';
-import * as path from 'path';
-import * as fs from 'fs';
-import { PeerCertificate } from 'tls';
-import { CaConfig } from '../types/ca-config';
-import { CaPair } from '../types/ca-pair';
-import { caConfig } from '../common/ca-config';
+import forge from "node-forge";
+import mkdirp from "mkdirp";
+import path from "path";
+import fs from "fs";
+import { PeerCertificate } from "tls";
+import { CaConfig } from "../types/ca-config";
+import { CaPair } from "../types/ca-pair";
+import { caConfig } from "../common/ca-config";
 
 export class TlsUtils {
   public static createCA(commonName: string): CaPair {

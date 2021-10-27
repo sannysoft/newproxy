@@ -1,10 +1,10 @@
-import * as http from 'http';
-import * as https from 'https';
-import { PeerCertificate, TLSSocket } from 'tls';
-import { TlsUtils } from './tls-utils';
-import { CaPair } from '../types/ca-pair';
-import { CertPromise } from '../types/cert-promise';
-import { Logger } from '../common/logger';
+import http from "http";
+import https from "https";
+import { PeerCertificate, TLSSocket } from "tls";
+import { TlsUtils } from "./tls-utils";
+import { CaPair } from "../types/ca-pair";
+import { CertPromise } from "../types/cert-promise";
+import { Logger } from "../common/logger";
 
 export class CertAndKeyContainer {
   private queue: CertPromise[] = [];

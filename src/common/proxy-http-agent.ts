@@ -1,4 +1,4 @@
-import * as AgentKeepAlive from 'agentkeepalive';
+import AgentKeepAlive from "agentkeepalive";
 
 export class ProxyHttpAgent extends AgentKeepAlive {
   // TODO

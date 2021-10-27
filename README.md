@@ -1,9 +1,8 @@
 # NewProxy
 
-`Originally created by wuchangming`
-
-[![styled with prettier](https://img.shields.io/badge/styled_with-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
-[![Dev Dependencies](https://david-dm.org/sannysoft/newproxy/dev-status.svg)](https://david-dm.org/sannysoft/newproxy?type=dev)
+![npm](https://img.shields.io/npm/dm/newproxy)
+![npm type definitions](https://img.shields.io/npm/types/newproxy)
+![npm](https://img.shields.io/npm/v/newproxy)
 
 JS Proxy library with support for request/response rewriting, optional SSL MITM (man-in-the-middle), external proxy.
 

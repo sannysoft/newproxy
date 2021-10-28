@@ -1,4 +1,4 @@
-<img src="https://sannysoft.com/other/newproxy-logo.png" alt="NewProxy" width="300">
+<img src="https://sannysoft.com/other/newproxy-logo.png" alt="NewProxy" width="400">
 
 
 ![npm](https://img.shields.io/npm/dm/newproxy)
@@ -68,4 +68,5 @@ await proxy.stop();
 ### Examples
  
  Multiple example files are available in /examples folder
- 
+
+<img src="https://api.segment.io/v1/pixel/page?data=eyJ3cml0ZUtleSI6ICJMQUtuOW9HN1lhM2JRSEZNQXBnOGlFYk92U0VCdUdrQSIsICJhbm9ueW1vdXNJZCI6IjEifQ==">

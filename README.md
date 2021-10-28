@@ -1,4 +1,5 @@
-# NewProxy
+<img src="https://sannysoft.com/other/newproxy-logo.png" alt="NewProxy" width="300">
+
 
 ![npm](https://img.shields.io/npm/dm/newproxy)
 ![npm type definitions](https://img.shields.io/npm/types/newproxy)

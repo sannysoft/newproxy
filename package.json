@@ -1,6 +1,6 @@
 {
   "name": "newproxy",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "description": "HTTP/HTTPS Proxy server with overrides & MITM support",
   "keywords": [
     "http proxy",

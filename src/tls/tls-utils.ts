@@ -9,7 +9,7 @@ import { caConfig } from '../common/ca-config';
 
 export class TlsUtils {
   public static createCA(commonName: string): CaPair {
-    const keys = forge.pki.rsa.generateKeyPair(2046);
+    const keys = forge.pki.rsa.generateKeyPair(2048);
     const cert = forge.pki.createCertificate();
     cert.publicKey = keys.publicKey;
     cert.serialNumber = `${new Date().getTime()}`;
@@ -78,7 +78,7 @@ export class TlsUtils {
   }
 
   public static createFakeCertificateByDomain(caPair: CaPair, domain: string): CaPair {
-    const keys = forge.pki.rsa.generateKeyPair(2046);
+    const keys = forge.pki.rsa.generateKeyPair(2048);
     const cert = forge.pki.createCertificate();
     cert.publicKey = keys.publicKey;
 
@@ -174,7 +174,7 @@ export class TlsUtils {
   ): CaPair {
     // const certificate = TlsUtils.covertNodeCertToForgeCert(originCertificate);
 
-    const keys = forge.pki.rsa.generateKeyPair(2046);
+    const keys = forge.pki.rsa.generateKeyPair(2048);
     const cert = forge.pki.createCertificate();
     cert.publicKey = keys.publicKey;
 

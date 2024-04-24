@@ -1,6 +1,6 @@
 import url from 'url';
 import { isNullOrUndefined, makeErr } from '../common/util-fns';
-import { isString, types } from './types';
+import { isString, isObject } from './types';
 
 export interface ExternalProxyConfigObject {
   host: string;
@@ -13,7 +13,7 @@ export type ExternalProxyConfig = ExternalProxyConfigObject | string;
 export type ExternalProxyConfigOrNull = ExternalProxyConfig | undefined;
 
 export function isExternalProxyConfigObject(obj: unknown): obj is ExternalProxyConfigObject {
-  return types(obj) && !!obj.host && !!obj.port;
+  return isObject(obj) && !!(obj as any).host && !!(obj as any).port;
 }
 
 export class ExternalProxyHelper {

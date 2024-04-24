@@ -32,7 +32,10 @@ export class NewProxy {
 
   private _fakeServersCenter?: FakeServersCenter;
 
-  public constructor(private readonly proxyConfig: ProxyConfig, private readonly logger: Logger) {
+  public constructor(
+    private readonly proxyConfig: ProxyConfig,
+    private readonly logger: Logger,
+  ) {
     this.requestHandler = createRequestHandler(this.proxyConfig, logger);
     this.upgradeHandler = createUpgradeHandler(this.proxyConfig, logger);
 

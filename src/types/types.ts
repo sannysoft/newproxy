@@ -1,6 +1,6 @@
 type ObjectCheck<T> = T extends object ? T : Record<any, unknown>;
 
-export function types<T extends {} | null | undefined | unknown>(
+export function isObject<T extends {} | null | undefined | unknown>(
   value: T,
 ): value is ObjectCheck<NonNullable<T>> {
   return value !== null && typeof value === 'object';

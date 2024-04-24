@@ -40,10 +40,10 @@ export class FakeServersCenter {
     }
 
     this.certAndKeyContainer = new CertAndKeyContainer(
-      this.maxFakeServersCount,
-      proxyConfig.getCertSocketTimeout,
       caPair,
       this.logger,
+      this.maxFakeServersCount,
+      proxyConfig.getCertSocketTimeout,
     );
   }
 

@@ -1,2 +1,4 @@
 2.1.0
   - request & response interceptor functions should now return Promise instead of calling next
+2.1.5
+  - Fix TunnelAgent

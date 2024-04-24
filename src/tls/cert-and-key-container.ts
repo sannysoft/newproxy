@@ -16,10 +16,10 @@ export class CertAndKeyContainer {
   private readonly caPair: CaPair;
 
   public constructor(
-    maxLength = 1000,
-    getCertSocketTimeout = 2 * 1000,
     caPair: CaPair,
     private logger: Logger,
+    maxLength = 1000,
+    getCertSocketTimeout = 2 * 1000,
   ) {
     this.maxLength = maxLength;
     this.getCertSocketTimeout = getCertSocketTimeout;
